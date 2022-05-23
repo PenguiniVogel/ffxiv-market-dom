@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FFXIV Market Dom</title>
+
+    <link rel="stylesheet" href="lib/bootstrap/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="lib/bootstrap/css/bootstrap-grid.min.css" />
+
+    <script src="lib/bootstrap/js/bootstrap.bundle.js"></script>
+
+    <script src="lib/ffxiv_item_map.js"></script>
+</head>
+<body class="bg-dark text-light">
+    <h3 class="text-center">FFXIV Market Dom</h3>
+    <hr />
+    <div style="margin-bottom: 10px;" class="container">
+        <div class="row">
+            <div class="col-1">Item:</div>
+            <div class="col-4">
+                <select style="display: none; position: absolute; z-index: 1; margin-top: 30px; width: 189px;" id="search-result"></select>
+                <input id="search-input" type="text" />
+            </div>
+            <div class="col-2">
+                <div class="btn btn-success">Add</div>
+            </div>
+        </div>
+    </div>
+    <div id="item-container" class="container">
+        <div class="row" style="margin-bottom: 12px;">
+            <div class="col-md-8">Information and % across Chaos to make some gil</div>
+        </div>
+
+        <!--div class="row">
+            <div class="col-md-8">
+                Item
+            </div>
+            <div class="col-md-4">
+                Some price stuff
+            </div>
+        </div-->
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
