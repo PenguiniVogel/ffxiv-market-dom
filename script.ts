@@ -44,6 +44,7 @@ module Script {
     } = {};
 
     let container = document.getElementById('item-container');
+    let suggestions = document.getElementById('suggestions');
 
     function init(): void {
         for (let item of ITEM_LIST) {
@@ -86,11 +87,22 @@ module Script {
 
         for (let key of Object.keys(ffxiv_item_map)) {
             if (ffxiv_item_map[key].en.toLowerCase().indexOf(search) > -1 && ffxiv_market_map.indexOf(+key) > -1) {
-                results.push(ffxiv_item_map[key].en);
+                results.push(`
+<div class="col bg-light text-dark">
+        <div class="row">
+            <div class="col-1">
+                <img width="28" src="https://universalis-ffxiv.github.io/universalis-assets/icon2x/${key}.png" alt="2x" />
+            </div>
+            <div class="col-10">${ffxiv_item_map[key].en}</div>
+        </div>
+    </div>
+</div>`);
             }
         }
 
         console.debug(results);
+
+        suggestions.innerHTML = results.join('');
     }
 
     function checkAllAvailable(): void {

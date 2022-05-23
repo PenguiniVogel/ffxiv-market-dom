@@ -15,6 +15,7 @@ var Script;
     var currentTimer = -1;
     var responses = {};
     var container = document.getElementById('item-container');
+    var suggestions = document.getElementById('suggestions');
     function init() {
         for (var _i = 0, ITEM_LIST_1 = ITEM_LIST; _i < ITEM_LIST_1.length; _i++) {
             var item = ITEM_LIST_1[_i];
@@ -54,10 +55,11 @@ var Script;
         for (var _i = 0, _a = Object.keys(ffxiv_item_map); _i < _a.length; _i++) {
             var key = _a[_i];
             if (ffxiv_item_map[key].en.toLowerCase().indexOf(search) > -1 && ffxiv_market_map.indexOf(+key) > -1) {
-                results.push(ffxiv_item_map[key].en);
+                results.push("\n<div class=\"col bg-light text-dark\">\n        <div class=\"row\">\n            <div class=\"col-1\">\n                <img width=\"28\" src=\"https://universalis-ffxiv.github.io/universalis-assets/icon2x/".concat(key, ".png\" alt=\"2x\" />\n            </div>\n            <div class=\"col-10\">").concat(ffxiv_item_map[key].en, "</div>\n        </div>\n    </div>\n</div>"));
             }
         }
         console.debug(results);
+        suggestions.innerHTML = results.join('');
     }
     function checkAllAvailable() {
         var _a;
