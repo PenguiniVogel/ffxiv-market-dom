@@ -32,13 +32,14 @@ module Script {
         'Spriggan'
     ];
 
-    const ITEM_LIST : number[] = [
+    let ITEM_LIST : number[] = [
         5371,
         21800,
         ...Cookie.storedList
     ];
 
     let currentTimer = -1;
+    let updateTimer = -1;
 
     let responses: {
         [world: string]: WorldResponse
@@ -80,6 +81,12 @@ module Script {
                 search(val);
             }, 250);
         });
+
+        loadData();
+    }
+
+    function loadData(): void {
+        responses = {};
 
         for (let k of WORLDS) {
             fetch(`https://universalis.app/api/${k}/${ITEM_LIST.join('%2C')}?listings=0&entries=0`).then(res => {
@@ -216,7 +223,16 @@ module Script {
         Cookie.storedList.push(id);
         Cookie.save();
 
-        window.location.reload();
+        ITEM_LIST.push(id);
+
+        container.innerHTML += createHTMLRow(id);
+
+        if (updateTimer == -1) {
+            updateTimer = setTimeout(() => {
+                loadData();
+                updateTimer = -1;
+            }, 5000);
+        }
     }
 
     export function removeTracking(id: number): void {

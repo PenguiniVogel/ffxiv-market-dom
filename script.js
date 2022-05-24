@@ -22,6 +22,7 @@ var Script;
         21800
     ], Cookie.storedList, true);
     var currentTimer = -1;
+    var updateTimer = -1;
     var responses = {};
     var container = document.getElementById('item-container');
     var suggestions = document.getElementById('suggestions');
@@ -53,6 +54,10 @@ var Script;
                 search(val);
             }, 250);
         });
+        loadData();
+    }
+    function loadData() {
+        responses = {};
         var _loop_1 = function (k) {
             fetch("https://universalis.app/api/".concat(k, "/").concat(ITEM_LIST.join('%2C'), "?listings=0&entries=0")).then(function (res) {
                 res.json().then(function (json) {
@@ -67,8 +72,8 @@ var Script;
                 });
             });
         };
-        for (var _a = 0, WORLDS_1 = WORLDS; _a < WORLDS_1.length; _a++) {
-            var k = WORLDS_1[_a];
+        for (var _i = 0, WORLDS_1 = WORLDS; _i < WORLDS_1.length; _i++) {
+            var k = WORLDS_1[_i];
             _loop_1(k);
         }
     }
@@ -141,7 +146,14 @@ var Script;
         hideSearch();
         Cookie.storedList.push(id);
         Cookie.save();
-        window.location.reload();
+        ITEM_LIST.push(id);
+        container.innerHTML += createHTMLRow(id);
+        if (updateTimer == -1) {
+            updateTimer = setTimeout(function () {
+                loadData();
+                updateTimer = -1;
+            }, 5000);
+        }
     }
     Script.addTracking = addTracking;
     function removeTracking(id) {
