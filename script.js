@@ -1,3 +1,12 @@
+var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
+};
 var Script;
 (function (Script) {
     var WORLDS = [
@@ -8,27 +17,40 @@ var Script;
         'Ragnarok',
         'Spriggan'
     ];
-    var ITEM_LIST = [
+    var ITEM_LIST = __spreadArray([
         5371,
         21800
-    ];
+    ], Cookie.storedList, true);
     var currentTimer = -1;
     var responses = {};
     var container = document.getElementById('item-container');
     var suggestions = document.getElementById('suggestions');
+    var searchInput = document.getElementById('search-input');
     function init() {
         for (var _i = 0, ITEM_LIST_1 = ITEM_LIST; _i < ITEM_LIST_1.length; _i++) {
             var item = ITEM_LIST_1[_i];
             container.innerHTML += createHTMLRow(item);
         }
-        document.getElementById('search-input').addEventListener('keyup', function (e) {
+        function hideEvent(e) {
+            if (e.code == 'Escape') {
+                hideSearch();
+            }
+        }
+        document.addEventListener('keyup', hideEvent);
+        document.addEventListener('click', function () { return hideSearch(); });
+        searchInput.addEventListener('keyup', function () {
             if (currentTimer > -1) {
                 clearTimeout(currentTimer);
                 currentTimer = -1;
             }
             currentTimer = setTimeout(function () {
                 currentTimer = -1;
-                search(e.target.value);
+                var val = searchInput.value;
+                if (val.length < 2) {
+                    hideSearch(false);
+                    return;
+                }
+                search(val);
             }, 250);
         });
         var _loop_1 = function (k) {
@@ -52,14 +74,24 @@ var Script;
     }
     function search(search) {
         var results = [];
+        var count = 0;
         for (var _i = 0, _a = Object.keys(ffxiv_item_map); _i < _a.length; _i++) {
             var key = _a[_i];
-            if (ffxiv_item_map[key].en.toLowerCase().indexOf(search) > -1 && ffxiv_market_map.indexOf(+key) > -1) {
-                results.push("\n<div class=\"col bg-light text-dark\">\n        <div class=\"row\">\n            <div class=\"col-1\">\n                <img width=\"28\" src=\"https://universalis-ffxiv.github.io/universalis-assets/icon2x/".concat(key, ".png\" alt=\"2x\" />\n            </div>\n            <div class=\"col-10\">").concat(ffxiv_item_map[key].en, "</div>\n        </div>\n    </div>\n</div>"));
+            if (count >= 50)
+                break;
+            if (ffxiv_item_map[key].en.toLowerCase().indexOf(search.toLowerCase()) > -1 && ffxiv_market_map.indexOf(+key) > -1 && ITEM_LIST.indexOf(+key) == -1) {
+                count++;
+                results.push("\n<div class=\"col bg-light text-dark\" data-itemid=\"".concat(key, "\" onclick=\"Script.addTracking(").concat(key, ");\">\n        <div class=\"row\">\n            <div class=\"col-1\">\n                <img width=\"28\" src=\"https://universalis-ffxiv.github.io/universalis-assets/icon2x/").concat(key, ".png\" alt=\"2x\" />\n            </div>\n            <div class=\"col-10\">").concat(ffxiv_item_map[key].en, "</div>\n        </div>\n    </div>\n</div>"));
             }
         }
-        console.debug(results);
-        suggestions.innerHTML = results.join('');
+        suggestions.innerHTML = results.join('\n');
+    }
+    function hideSearch(setInput) {
+        if (setInput === void 0) { setInput = true; }
+        suggestions.innerHTML = '';
+        if (setInput) {
+            document.getElementById('search-input').value = '';
+        }
     }
     function checkAllAvailable() {
         var _a;
@@ -103,7 +135,27 @@ var Script;
         }
     }
     function createHTMLRow(id) {
-        return "\n        <div data-id=\"".concat(id, "\" class=\"row\" style=\"margin-bottom: 5px;\">\n            <div class=\"col\">\n                <div class=\"row\">\n                    <div class=\"col-1\">\n                        <img width=\"28\" src=\"https://universalis-ffxiv.github.io/universalis-assets/icon2x/").concat(id, ".png\" />\n                    </div>\n                    <div class=\"col\">\n                        <div>").concat(ffxiv_item_map["".concat(id)].en, " <span class=\"small text-secondary\" data-currentprice></span></div>\n                        <div class=\"col small text-secondary\" data-recentsales>Recently sold: ???</div>\n                    </div>\n                </div>\n            </div>\n            <div class=\"col\">\n                <div class=\"row\">\n                    <div class=\"col\" data-cheapestworld>???</div>\n                </div>\n                <div class=\"row\">\n                    <div class=\"col-3 small\" data-cheapestprice>???</div>\n                    <div class=\"col-3\" data-cheapestdiff>???</div>\n                </div>\n            </div>\n        </div>\n        ");
+        return "\n        <div data-id=\"".concat(id, "\" class=\"row\" style=\"margin-bottom: 5px;\">\n            <div class=\"col\">\n                <div class=\"row\">\n                    <div class=\"col-1\"").concat((id == 5371 || id == 21800) ? '' : " data-delete onclick=\"Script.removeTracking(".concat(id, ");\""), ">\n                        <img width=\"28\" alt=\"2x\" src=\"https://universalis-ffxiv.github.io/universalis-assets/icon2x/").concat(id, ".png\" />\n                    </div>\n                    <div class=\"col\">\n                        <div><a class=\"nav-link\" href=\"https://universalis.app/market/").concat(id, "\" target=\"_blank\">").concat(ffxiv_item_map["".concat(id)].en, "</a> <span class=\"small text-secondary\" data-currentprice></span></div>\n                        <div class=\"col small text-secondary\" data-recentsales>Recently sold: ???</div>\n                    </div>\n                </div>\n            </div>\n            <div class=\"col\">\n                <div class=\"row\">\n                    <div class=\"col\" data-cheapestworld>???</div>\n                </div>\n                <div class=\"row\">\n                    <div class=\"col-3 small\" data-cheapestprice>???</div>\n                    <div class=\"col-3\" data-cheapestdiff>???</div>\n                </div>\n            </div>\n        </div>\n        ");
     }
+    function addTracking(id) {
+        hideSearch();
+        Cookie.storedList.push(id);
+        Cookie.save();
+        window.location.reload();
+    }
+    Script.addTracking = addTracking;
+    function removeTracking(id) {
+        if (id == 5371 || id == 21800) {
+            return;
+        }
+        if (confirm("Remove ".concat(ffxiv_item_map[id].en, " (").concat(id, ") from being tracked?"))) {
+            hideSearch();
+            Cookie.storedList = Cookie.storedList.filter(function (x) { return x != id; });
+            Cookie.save();
+            window.location.reload();
+        }
+    }
+    Script.removeTracking = removeTracking;
+    // start
     init();
 })(Script || (Script = {}));

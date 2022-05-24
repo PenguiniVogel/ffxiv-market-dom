@@ -1,3 +1,11 @@
+declare var ffxiv_item_map: {
+    [id: string]: {
+        'en': string
+    }
+};
+
+declare var ffxiv_market_map: number[];
+
 module Script {
 
     interface WorldResponseItem {
@@ -15,14 +23,6 @@ module Script {
         }
     }
 
-    declare var ffxiv_item_map: {
-        [id: string]: {
-            'en': string
-        }
-    };
-
-    declare var ffxiv_market_map: number[];
-
     const WORLDS: string[] = [
         'Cerberus',
         'Louisoix',
@@ -34,7 +34,8 @@ module Script {
 
     const ITEM_LIST : number[] = [
         5371,
-        21800
+        21800,
+        ...Cookie.storedList
     ];
 
     let currentTimer = -1;
@@ -45,13 +46,23 @@ module Script {
 
     let container = document.getElementById('item-container');
     let suggestions = document.getElementById('suggestions');
+    let searchInput = <HTMLInputElement>document.getElementById('search-input');
 
     function init(): void {
         for (let item of ITEM_LIST) {
             container.innerHTML += createHTMLRow(item);
         }
 
-        document.getElementById('search-input').addEventListener('keyup', (e) => {
+        function hideEvent(e: KeyboardEvent): void {
+            if (e.code == 'Escape') {
+                hideSearch();
+            }
+        }
+
+        document.addEventListener('keyup', hideEvent);
+        document.addEventListener('click', () => hideSearch());
+
+        searchInput.addEventListener('keyup', () => {
             if (currentTimer > -1) {
                 clearTimeout(currentTimer);
                 currentTimer = -1;
@@ -59,7 +70,14 @@ module Script {
 
             currentTimer = setTimeout(() => {
                 currentTimer = -1;
-                search((<HTMLInputElement>e.target).value);
+                let val = searchInput.value;
+
+                if (val.length < 2) {
+                    hideSearch(false);
+                    return;
+                }
+
+                search(val);
             }, 250);
         });
 
@@ -85,10 +103,14 @@ module Script {
     function search(search: string): void {
         let results: string[] = [];
 
+        let count = 0;
         for (let key of Object.keys(ffxiv_item_map)) {
-            if (ffxiv_item_map[key].en.toLowerCase().indexOf(search) > -1 && ffxiv_market_map.indexOf(+key) > -1) {
+            if (count >= 50) break;
+
+            if (ffxiv_item_map[key].en.toLowerCase().indexOf(search.toLowerCase()) > -1 && ffxiv_market_map.indexOf(+key) > -1 && ITEM_LIST.indexOf(+key) == -1) {
+                count ++;
                 results.push(`
-<div class="col bg-light text-dark">
+<div class="col bg-light text-dark" data-itemid="${key}" onclick="Script.addTracking(${key});">
         <div class="row">
             <div class="col-1">
                 <img width="28" src="https://universalis-ffxiv.github.io/universalis-assets/icon2x/${key}.png" alt="2x" />
@@ -100,9 +122,15 @@ module Script {
             }
         }
 
-        console.debug(results);
+        suggestions.innerHTML = results.join('\n');
+    }
 
-        suggestions.innerHTML = results.join('');
+    function hideSearch(setInput: boolean = true): void {
+        suggestions.innerHTML = '';
+
+        if (setInput) {
+            (<HTMLInputElement>document.getElementById('search-input')).value = '';
+        }
     }
 
     function checkAllAvailable(): void {
@@ -160,11 +188,11 @@ module Script {
         <div data-id="${id}" class="row" style="margin-bottom: 5px;">
             <div class="col">
                 <div class="row">
-                    <div class="col-1">
-                        <img width="28" src="https://universalis-ffxiv.github.io/universalis-assets/icon2x/${id}.png" />
+                    <div class="col-1"${(id == 5371 || id == 21800) ? '' : ` data-delete onclick="Script.removeTracking(${id});"`}>
+                        <img width="28" alt="2x" src="https://universalis-ffxiv.github.io/universalis-assets/icon2x/${id}.png" />
                     </div>
                     <div class="col">
-                        <div>${ffxiv_item_map[`${id}`].en} <span class="small text-secondary" data-currentprice></span></div>
+                        <div><a class="nav-link" href="https://universalis.app/market/${id}" target="_blank">${ffxiv_item_map[`${id}`].en}</a> <span class="small text-secondary" data-currentprice></span></div>
                         <div class="col small text-secondary" data-recentsales>Recently sold: ???</div>
                     </div>
                 </div>
@@ -182,6 +210,31 @@ module Script {
         `;
     }
 
+    export function addTracking(id: number): void {
+        hideSearch();
+
+        Cookie.storedList.push(id);
+        Cookie.save();
+
+        window.location.reload();
+    }
+
+    export function removeTracking(id: number): void {
+        if (id == 5371 || id == 21800) {
+            return;
+        }
+
+        if (confirm(`Remove ${ffxiv_item_map[id].en} (${id}) from being tracked?`)) {
+            hideSearch();
+
+            Cookie.storedList = Cookie.storedList.filter(x => x != id);
+            Cookie.save();
+
+            window.location.reload();
+        }
+    }
+
+    // start
     init();
 
 }
