@@ -1,27 +1,9 @@
-declare var ffxiv_item_map: {
-    [id: string]: {
-        'en': string
-    }
-};
-
-declare var ffxiv_market_map: number[];
-
 module Script {
 
-    interface WorldResponseItem {
-        itemID: number,
-        regularSaleVelocity: number,
-        averagePrice: number,
-        minPrice: number,
-        worldName: string
-    }
-
-    interface WorldResponse {
-        items: WorldResponseItem[]
-        indexMap: {
-            [id: number]: number
-        }
-    }
+    const PAGE_MAP = {
+        'main': 1,
+        'bestseller': 2
+    };
 
     const WORLDS: string[] = [
         'Cerberus',
@@ -48,6 +30,7 @@ module Script {
     let container = document.getElementById('item-container');
     let suggestions = document.getElementById('suggestions');
     let searchInput = <HTMLInputElement>document.getElementById('search-input');
+    let topBody = <HTMLElement>document.querySelector('#topSales tbody');
 
     function init(): void {
         for (let item of ITEM_LIST) {
@@ -82,7 +65,18 @@ module Script {
             }, 250);
         });
 
+        document.querySelectorAll('nav button[data-page]').forEach((btn: HTMLElement) => {
+            btn.addEventListener('click', (e) => {
+                page(+(<HTMLElement>e.target).getAttribute('data-page'));
+            });
+        });
+
+        if (window?.location?.href?.indexOf('#bestseller') > -1) {
+            page(PAGE_MAP['bestseller']);
+        }
+
         loadData();
+        loadWeekly();
     }
 
     function loadData(): void {
@@ -220,6 +214,10 @@ module Script {
     export function addTracking(id: number): void {
         hideSearch();
 
+        if (Cookie.storedList.indexOf(id) > -1) {
+            return;
+        }
+
         Cookie.storedList.push(id);
         Cookie.save();
 
@@ -235,6 +233,21 @@ module Script {
         }
     }
 
+    export function addBestseller(id: number): void {
+        let btn = document.querySelector(`button[data-addref="${id}"]`);
+
+        if (!btn) {
+            return;
+        }
+
+        btn.removeAttribute('onclick');
+
+        btn.setAttribute('class', 'bg-success');
+        btn.setAttribute('data-addref', '-1');
+
+        addTracking(id);
+    }
+
     export function removeTracking(id: number): void {
         if (id == 5371 || id == 21800) {
             return;
@@ -247,6 +260,53 @@ module Script {
             Cookie.save();
 
             window.location.reload();
+        }
+    }
+
+    export function page(nr: number): void {
+        document.querySelectorAll('e[id^="page"]').forEach((e: HTMLElement) => e.setAttribute('style', 'display: none;'));
+        document.querySelectorAll('nav button[data-page]').forEach((e: HTMLElement) => e.setAttribute('class', 'nav-item"'));
+
+        document.querySelector(`button[data-page="${nr}"]`).setAttribute('class', 'nav-item text-light bg-success');
+        document.querySelector(`e#page${nr}`).setAttribute('style', '');
+    }
+
+    function loadWeekly(): void {
+        let sorted = weekly_dump.sort((a, b) => {
+            return a.regularSaleVelocity > b.regularSaleVelocity ? -1 : 1;
+        });
+
+        let top = sorted.slice(0, 100).sort((a, b) => a.averagePrice > b.averagePrice ? -1 : 1);
+
+        console.debug(top);
+
+        function createTR(i: number, item: WorldResponseItem): string {
+            function displayNoneOrEmpty(input: number, outStr: string): string {
+                return input < 0.0001 ? '<span class="text-danger">---</span>' : outStr;
+            }
+
+            return `
+            <tr>
+                <td class="text-center">
+                    <button data-addref="${item.itemID}" ${ITEM_LIST.indexOf(item.itemID) > -1 ? 'class="text-light bg-success"' : `class="text-dark bg-light" onclick="Script.addBestseller(${item.itemID});"`} >&check;</button>
+                </td>
+                <td class="text-center">&nbsp;#${i}&nbsp;</td>
+                <td>
+                    <img width="24" alt="2x" src="https://universalis-ffxiv.github.io/universalis-assets/icon2x/${item.itemID}.png" />
+                </td>
+                <td>&nbsp;${ffxiv_item_map[item.itemID].en}&nbsp;</td>
+                <td class="text-secondary text-center">&nbsp;(${item.itemID})&nbsp;</td>
+                <td class="text-center">&nbsp;${displayNoneOrEmpty(item.averagePrice, (item.averagePrice).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}&nbsp;</td>
+                <td class="text-center">&nbsp;${displayNoneOrEmpty(item.averagePriceNQ, (item.averagePriceNQ).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}&nbsp;</td>
+                <td class="text-center">&nbsp;${displayNoneOrEmpty(item.averagePriceHQ, (item.averagePriceHQ).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}&nbsp;</td>
+                <td class="text-center">&nbsp;${displayNoneOrEmpty(item.regularSaleVelocity, (item.regularSaleVelocity).toFixed(3))}&nbsp;</td>
+                <td class="text-center">&nbsp;${displayNoneOrEmpty(item.nqSaleVelocity, (item.nqSaleVelocity).toFixed(3))}&nbsp;</td>
+                <td class="text-center">&nbsp;${displayNoneOrEmpty(item.hqSaleVelocity, (item.hqSaleVelocity).toFixed(3))}&nbsp;</td>
+            </tr>`;
+        }
+
+        for (let i = 0, l = top.length; i < l; i ++) {
+            topBody.innerHTML += createTR(i + 1, top[i]);
         }
     }
 

@@ -9,6 +9,10 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
 };
 var Script;
 (function (Script) {
+    var PAGE_MAP = {
+        'main': 1,
+        'bestseller': 2
+    };
     var WORLDS = [
         'Cerberus',
         'Louisoix',
@@ -27,7 +31,9 @@ var Script;
     var container = document.getElementById('item-container');
     var suggestions = document.getElementById('suggestions');
     var searchInput = document.getElementById('search-input');
+    var topBody = document.querySelector('#topSales tbody');
     function init() {
+        var _a, _b;
         for (var _i = 0, ITEM_LIST_1 = ITEM_LIST; _i < ITEM_LIST_1.length; _i++) {
             var item = ITEM_LIST_1[_i];
             container.innerHTML += createHTMLRow(item);
@@ -54,7 +60,16 @@ var Script;
                 search(val);
             }, 250);
         });
+        document.querySelectorAll('nav button[data-page]').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                page(+e.target.getAttribute('data-page'));
+            });
+        });
+        if (((_b = (_a = window === null || window === void 0 ? void 0 : window.location) === null || _a === void 0 ? void 0 : _a.href) === null || _b === void 0 ? void 0 : _b.indexOf('#bestseller')) > -1) {
+            page(PAGE_MAP['bestseller']);
+        }
         loadData();
+        loadWeekly();
     }
     function loadData() {
         responses = {};
@@ -144,6 +159,9 @@ var Script;
     }
     function addTracking(id) {
         hideSearch();
+        if (Cookie.storedList.indexOf(id) > -1) {
+            return;
+        }
         Cookie.storedList.push(id);
         Cookie.save();
         ITEM_LIST.push(id);
@@ -156,6 +174,17 @@ var Script;
         }
     }
     Script.addTracking = addTracking;
+    function addBestseller(id) {
+        var btn = document.querySelector("button[data-addref=\"".concat(id, "\"]"));
+        if (!btn) {
+            return;
+        }
+        btn.removeAttribute('onclick');
+        btn.setAttribute('class', 'bg-success');
+        btn.setAttribute('data-addref', '-1');
+        addTracking(id);
+    }
+    Script.addBestseller = addBestseller;
     function removeTracking(id) {
         if (id == 5371 || id == 21800) {
             return;
@@ -168,6 +197,29 @@ var Script;
         }
     }
     Script.removeTracking = removeTracking;
+    function page(nr) {
+        document.querySelectorAll('e[id^="page"]').forEach(function (e) { return e.setAttribute('style', 'display: none;'); });
+        document.querySelectorAll('nav button[data-page]').forEach(function (e) { return e.setAttribute('class', 'nav-item"'); });
+        document.querySelector("button[data-page=\"".concat(nr, "\"]")).setAttribute('class', 'nav-item text-light bg-success');
+        document.querySelector("e#page".concat(nr)).setAttribute('style', '');
+    }
+    Script.page = page;
+    function loadWeekly() {
+        var sorted = weekly_dump.sort(function (a, b) {
+            return a.regularSaleVelocity > b.regularSaleVelocity ? -1 : 1;
+        });
+        var top = sorted.slice(0, 100).sort(function (a, b) { return a.averagePrice > b.averagePrice ? -1 : 1; });
+        console.debug(top);
+        function createTR(i, item) {
+            function displayNoneOrEmpty(input, outStr) {
+                return input < 0.0001 ? '<span class="text-danger">---</span>' : outStr;
+            }
+            return "\n            <tr>\n                <td class=\"text-center\">\n                    <button data-addref=\"".concat(item.itemID, "\" ").concat(ITEM_LIST.indexOf(item.itemID) > -1 ? 'class="text-light bg-success"' : "class=\"text-dark bg-light\" onclick=\"Script.addBestseller(".concat(item.itemID, ");\""), " >&check;</button>\n                </td>\n                <td class=\"text-center\">&nbsp;#").concat(i, "&nbsp;</td>\n                <td>\n                    <img width=\"24\" alt=\"2x\" src=\"https://universalis-ffxiv.github.io/universalis-assets/icon2x/").concat(item.itemID, ".png\" />\n                </td>\n                <td>&nbsp;").concat(ffxiv_item_map[item.itemID].en, "&nbsp;</td>\n                <td class=\"text-secondary text-center\">&nbsp;(").concat(item.itemID, ")&nbsp;</td>\n                <td class=\"text-center\">&nbsp;").concat(displayNoneOrEmpty(item.averagePrice, (item.averagePrice).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })), "&nbsp;</td>\n                <td class=\"text-center\">&nbsp;").concat(displayNoneOrEmpty(item.averagePriceNQ, (item.averagePriceNQ).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })), "&nbsp;</td>\n                <td class=\"text-center\">&nbsp;").concat(displayNoneOrEmpty(item.averagePriceHQ, (item.averagePriceHQ).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })), "&nbsp;</td>\n                <td class=\"text-center\">&nbsp;").concat(displayNoneOrEmpty(item.regularSaleVelocity, (item.regularSaleVelocity).toFixed(3)), "&nbsp;</td>\n                <td class=\"text-center\">&nbsp;").concat(displayNoneOrEmpty(item.nqSaleVelocity, (item.nqSaleVelocity).toFixed(3)), "&nbsp;</td>\n                <td class=\"text-center\">&nbsp;").concat(displayNoneOrEmpty(item.hqSaleVelocity, (item.hqSaleVelocity).toFixed(3)), "&nbsp;</td>\n            </tr>");
+        }
+        for (var i = 0, l = top.length; i < l; i++) {
+            topBody.innerHTML += createTR(i + 1, top[i]);
+        }
+    }
     // start
     init();
 })(Script || (Script = {}));

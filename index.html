@@ -10,6 +10,7 @@
     <script src="lib/bootstrap/js/bootstrap.bundle.js"></script>
 
     <script src="lib/ffxiv_item_map.js"></script>
+    <script src="lib/ffxiv_weekly_dump.js"></script>
 
     <script src="Cookie.js"></script>
 
@@ -26,34 +27,72 @@
 </head>
 <body class="bg-dark text-light">
     <h3 class="text-center">FFXIV Market Dom</h3>
+    <div class="container">
+        <nav class="navbar">
+            <button data-page="1" class="nav-item text-light bg-success">My Tacked</button>
+            <button data-page="2" class="nav-item">Bestsellers</button>
+        </nav>
+    </div>
     <hr />
-    <div style="margin-bottom: 10px;" class="container">
-        <div class="row">
-            <div class="col-1">Item:</div>
-            <div class="col-4">
-                <input id="search-input" class="form-control basicAutoComplete" type="text" autocomplete="off" />
-                <div id="suggestions" style="position: absolute; max-height: 500px; overflow: auto;" class="col-6">
+    <e id="page1" data-anchor="main">
+        <div style="margin-bottom: 10px;" class="container">
+            <div class="row">
+                <div class="col-1">Item:</div>
+                <div class="col-4">
+                    <input id="search-input" class="form-control basicAutoComplete" type="text" autocomplete="off" />
+                    <div id="suggestions" style="position: absolute; max-height: 500px; overflow: auto;" class="col-6">
+                    </div>
+                </div>
+                <div class="col-2">
+                    <div class="btn btn-success">Add</div>
                 </div>
             </div>
-            <div class="col-2">
-                <div class="btn btn-success">Add</div>
+        </div>
+        <div id="item-container" class="container">
+            <div class="row" style="margin-bottom: 12px;">
+                <div class="col-md-8">Information and % across Chaos to make some gil</div>
             </div>
         </div>
-    </div>
-    <div id="item-container" class="container">
-        <div class="row" style="margin-bottom: 12px;">
-            <div class="col-md-8">Information and % across Chaos to make some gil</div>
-        </div>
+    </e>
 
-        <!--div class="row">
-            <div class="col-md-8">
-                Item
-            </div>
-            <div class="col-md-4">
-                Some price stuff
-            </div>
-        </div-->
-    </div>
+    <e id="page2" style="display: none;" data-anchor="bestseller">
+        <div class="container">
+            <table id="topSales" class="table-bordered">
+                <thead>
+                <tr>
+                    <th class="text-danger">&nbsp;Add&nbsp;</th>
+                    <th class="text-center">&nbsp;Rank&nbsp;</th>
+                    <th></th>
+                    <th class="text-center">&nbsp;Name&nbsp;</th>
+                    <th class="text-center">&nbsp;ID&nbsp;</th>
+                    <th class="text-center">&nbsp;avg. Price&nbsp;</th>
+                    <th class="text-center">&nbsp;avg. NQ Price&nbsp;</th>
+                    <th class="text-center">&nbsp;avg. HQ Price </th>
+                    <th class="text-center">&nbsp;avg. Sales&nbsp;</th>
+                    <th class="text-center">&nbsp;avg. NQ Sales&nbsp;</th>
+                    <th class="text-center">&nbsp;avg. HQ Sales&nbsp;</th>
+                </tr>
+                </thead>
+                <tbody>
+                <!--tr>
+                    <td class="text-center">&nbsp;#1&nbsp;</td>
+                    <td>
+                        <img width="24" alt="2x" src="https://universalis-ffxiv.github.io/universalis-assets/icon2x/21800.png" />
+                    </td>
+                    <td>&nbsp;Glamour Prism&nbsp;</td>
+                    <td class="text-secondary text-center">&nbsp;(21800)&nbsp;</td>
+                    <td class="text-center">&nbsp;299&nbsp;</td>
+                    <td class="text-center">&nbsp;299&nbsp;</td>
+                    <td class="text-center">&nbsp;0&nbsp;</td>
+                    <td class="text-center">&nbsp;3&nbsp;</td>
+                    <td class="text-center">&nbsp;3&nbsp;</td>
+                    <td class="text-center">&nbsp;0&nbsp;</td>
+                </tr-->
+                </tbody>
+            </table>
+        </div>
+    </e>
+
     <script src="script.js"></script>
 </body>
 </html>

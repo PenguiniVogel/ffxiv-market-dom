@@ -3,5 +3,11 @@
         "module": "none",
         "target": "es5",
         "sourceMap": false
-    }
+    },
+    "files": [
+        "globals.d.ts",
+        "Cookie.ts",
+        "script.ts",
+        "weekly/weekly.ts"
+    ]
 }
