@@ -129,33 +129,47 @@ var Script;
             for (var _b = 0, _c = data.items; _b < _c.length; _b++) {
                 var item = _c[_b];
                 if (!cheapest[item.itemID]) {
-                    cheapest[item.itemID] = item;
+                    cheapest[item.itemID] = {
+                        nq: item,
+                        hq: item
+                    };
                 }
                 if (world == 'Moogle') {
-                    document.querySelector("[data-id=\"".concat(item.itemID, "\"] [data-recentsales]")).innerHTML = "Recently sold: ".concat(item.regularSaleVelocity.toFixed(0), " (stack) ~").concat(item.averagePrice.toFixed(0), " Gil");
+                    document.querySelector("[data-id=\"".concat(item.itemID, "\"] [data-recentsales]")).innerHTML = "Recently sold: ".concat(item.nqSaleVelocity.toFixed(0), " (nq) ~").concat(item.averagePriceNQ.toFixed(0), " Gil / ").concat(item.hqSaleVelocity.toFixed(0), " (hq) ~").concat(item.averagePriceHQ.toFixed(0), " Gil");
                 }
-                if (item.minPrice < cheapest[item.itemID].minPrice) {
-                    cheapest[item.itemID] = item;
+                if (item.minPriceNQ < cheapest[item.itemID].nq.minPriceNQ) {
+                    cheapest[item.itemID].nq = item;
+                }
+                if (item.minPriceHQ < cheapest[item.itemID].nq.minPriceHQ) {
+                    cheapest[item.itemID].hq = item;
                 }
             }
         }
         for (var _d = 0, _e = Object.keys(cheapest); _d < _e.length; _d++) {
             var item_id = _e[_d];
-            var item = cheapest[item_id];
-            var main = document.querySelector("[data-id=\"".concat(item.itemID, "\"]"));
-            main.querySelector('[data-cheapestworld]').innerHTML = item.worldName;
-            main.querySelector('[data-cheapestprice]').innerHTML = "".concat(item.minPrice, " Gil");
+            var itemNQ = cheapest[item_id].nq;
+            var itemHQ = cheapest[item_id].hq;
+            var main = document.querySelector("[data-id=\"".concat(itemNQ.itemID, "\"]"));
+            main.querySelector('[data-cheapestworld-nq]').innerHTML = itemNQ.worldName;
+            main.querySelector('[data-cheapestprice-nq]').innerHTML = "".concat(itemNQ.minPriceNQ, " Gil (NQ)");
+            main.querySelector('[data-cheapestworld-hq]').innerHTML = itemHQ.worldName;
+            main.querySelector('[data-cheapestprice-hq]').innerHTML = "".concat(itemHQ.minPriceHQ, " Gil (HQ)");
             var moogle = responses['Moogle'];
-            var homeItem = moogle.items[moogle.indexMap[item.itemID]];
-            var max = Math.max(homeItem.minPrice, item.minPrice * 1.05);
-            var min = Math.min(homeItem.minPrice, item.minPrice * 1.05);
-            var profit = homeItem.minPrice > item.minPrice * 1.05;
-            main.querySelector('[data-currentprice]').innerHTML = "".concat(homeItem.minPrice, " Gil");
-            main.querySelector('[data-cheapestdiff]').innerHTML = "<span class=\"".concat(profit ? 'text-success' : 'text-danger', "\">").concat(profit ? '+' : '-').concat((((max - min) / max) * 100).toFixed(2), "%</span>");
+            var homeItem = moogle.items[moogle.indexMap[itemNQ.itemID]];
+            var maxNQ = Math.max(homeItem.minPriceNQ, itemNQ.minPriceNQ * 1.05);
+            var minNQ = Math.min(homeItem.minPriceNQ, itemNQ.minPriceNQ * 1.05);
+            var profitNQ = homeItem.minPriceNQ > itemNQ.minPriceNQ * 1.05;
+            var maxHQ = Math.max(homeItem.minPriceHQ, itemHQ.minPriceHQ * 1.05);
+            var minHQ = Math.min(homeItem.minPriceHQ, itemHQ.minPriceHQ * 1.05);
+            var profitHQ = homeItem.minPriceHQ > itemHQ.minPriceHQ * 1.05;
+            main.querySelector('[data-currentprice-nq]').innerHTML = "".concat(homeItem.minPriceNQ, " Gil (NQ)");
+            main.querySelector('[data-cheapestdiff-nq]').innerHTML = "<span class=\"".concat(profitNQ ? 'text-success' : 'text-danger', "\">").concat(profitNQ ? '+' : '-').concat((((maxNQ - minNQ) / maxNQ) * 100).toFixed(2), "%</span>");
+            main.querySelector('[data-currentprice-hq]').innerHTML = "".concat(homeItem.minPriceHQ, " Gil (HQ)");
+            main.querySelector('[data-cheapestdiff-hq]').innerHTML = "<span class=\"".concat(profitHQ ? 'text-success' : 'text-danger', "\">").concat(profitHQ ? '+' : '-').concat((((maxHQ - minHQ) / maxHQ) * 100).toFixed(2), "%</span>");
         }
     }
     function createHTMLRow(id) {
-        return "\n        <div data-id=\"".concat(id, "\" class=\"row\" style=\"margin-bottom: 5px;\">\n            <div class=\"col\">\n                <div class=\"row\">\n                    <div class=\"col-1\"").concat((id == 5371 || id == 21800) ? '' : " data-delete onclick=\"Script.removeTracking(".concat(id, ");\""), ">\n                        <img width=\"28\" alt=\"2x\" src=\"https://universalis-ffxiv.github.io/universalis-assets/icon2x/").concat(id, ".png\" />\n                    </div>\n                    <div class=\"col\">\n                        <div><a class=\"nav-link\" href=\"https://universalis.app/market/").concat(id, "\" target=\"_blank\">").concat(ffxiv_item_map["".concat(id)].en, "</a> <span class=\"small text-secondary\" data-currentprice></span></div>\n                        <div class=\"col small text-secondary\" data-recentsales>Recently sold: ???</div>\n                    </div>\n                </div>\n            </div>\n            <div class=\"col\">\n                <div class=\"row\">\n                    <div class=\"col\" data-cheapestworld>???</div>\n                </div>\n                <div class=\"row\">\n                    <div class=\"col-3 small\" data-cheapestprice>???</div>\n                    <div class=\"col-3\" data-cheapestdiff>???</div>\n                </div>\n            </div>\n        </div>\n        ");
+        return "\n        <div data-id=\"".concat(id, "\" class=\"row\" style=\"margin-bottom: 5px;\">\n            <div class=\"col\">\n                <div class=\"row\">\n                    <div class=\"col-1\"").concat((id == 5371 || id == 21800) ? '' : " data-delete onclick=\"Script.removeTracking(".concat(id, ");\""), ">\n                        <img width=\"28\" alt=\"2x\" src=\"https://universalis-ffxiv.github.io/universalis-assets/icon2x/").concat(id, ".png\" />\n                    </div>\n                    <div class=\"col\">\n                        <div><a class=\"nav-link\" href=\"https://universalis.app/market/").concat(id, "\" target=\"_blank\">").concat(ffxiv_item_map["".concat(id)].en, "</a> <span class=\"small text-secondary\" data-currentprice-nq></span><span class=\"small text-secondary\"> / </span><span class=\"small text-secondary\" data-currentprice-hq></span></div>\n                        <div class=\"col small text-secondary\" data-recentsales>Recently sold: ???</div>\n                    </div>\n                </div>\n            </div>\n            <div class=\"col\">\n                <div class=\"row\">\n                    <div class=\"col\" data-cheapestworld-nq>???</div>\n                    <div class=\"col-3 small\" data-cheapestprice-nq>???</div>\n                    <div class=\"col-3\" data-cheapestdiff-nq>???</div>\n                </div>\n                <div class=\"row\">\n                    <div class=\"col\" data-cheapestworld-hq>???</div>\n                    <div class=\"col-3 small\" data-cheapestprice-hq>???</div>\n                    <div class=\"col-3\" data-cheapestdiff-hq>???</div>\n                </div>\n            </div>\n        </div>\n        ");
     }
     function addTracking(id) {
         hideSearch();
@@ -211,10 +225,10 @@ var Script;
         var top = sorted.slice(0, 100).sort(function (a, b) { return a.averagePrice > b.averagePrice ? -1 : 1; });
         console.debug(top);
         function createTR(i, item) {
-            function displayNoneOrEmpty(input, outStr) {
+            function displayNumOrEmpty(input, outStr) {
                 return input < 0.0001 ? '<span class="text-danger">---</span>' : outStr;
             }
-            return "\n            <tr>\n                <td class=\"text-center\">\n                    <button data-addref=\"".concat(item.itemID, "\" ").concat(ITEM_LIST.indexOf(item.itemID) > -1 ? 'class="text-light bg-success"' : "class=\"text-dark bg-light\" onclick=\"Script.addBestseller(".concat(item.itemID, ");\""), " >&check;</button>\n                </td>\n                <td class=\"text-center\">&nbsp;#").concat(i, "&nbsp;</td>\n                <td>\n                    <img width=\"24\" alt=\"2x\" src=\"https://universalis-ffxiv.github.io/universalis-assets/icon2x/").concat(item.itemID, ".png\" />\n                </td>\n                <td>&nbsp;").concat(ffxiv_item_map[item.itemID].en, "&nbsp;</td>\n                <td class=\"text-secondary text-center\">&nbsp;(").concat(item.itemID, ")&nbsp;</td>\n                <td class=\"text-center\">&nbsp;").concat(displayNoneOrEmpty(item.averagePrice, (item.averagePrice).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })), "&nbsp;</td>\n                <td class=\"text-center\">&nbsp;").concat(displayNoneOrEmpty(item.averagePriceNQ, (item.averagePriceNQ).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })), "&nbsp;</td>\n                <td class=\"text-center\">&nbsp;").concat(displayNoneOrEmpty(item.averagePriceHQ, (item.averagePriceHQ).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })), "&nbsp;</td>\n                <td class=\"text-center\">&nbsp;").concat(displayNoneOrEmpty(item.regularSaleVelocity, (item.regularSaleVelocity).toFixed(3)), "&nbsp;</td>\n                <td class=\"text-center\">&nbsp;").concat(displayNoneOrEmpty(item.nqSaleVelocity, (item.nqSaleVelocity).toFixed(3)), "&nbsp;</td>\n                <td class=\"text-center\">&nbsp;").concat(displayNoneOrEmpty(item.hqSaleVelocity, (item.hqSaleVelocity).toFixed(3)), "&nbsp;</td>\n            </tr>");
+            return "\n            <tr>\n                <td class=\"text-center\">\n                    <button data-addref=\"".concat(item.itemID, "\" ").concat(ITEM_LIST.indexOf(item.itemID) > -1 ? 'class="text-light bg-success"' : "class=\"text-dark bg-light\" onclick=\"Script.addBestseller(".concat(item.itemID, ");\""), " >&check;</button>\n                </td>\n                <td class=\"text-center\">&nbsp;#").concat(i, "&nbsp;</td>\n                <td>\n                    <img width=\"24\" alt=\"2x\" src=\"https://universalis-ffxiv.github.io/universalis-assets/icon2x/").concat(item.itemID, ".png\" />\n                </td>\n                <td>&nbsp;").concat(ffxiv_item_map[item.itemID].en, "&nbsp;</td>\n                <td class=\"text-secondary text-center\">&nbsp;(").concat(item.itemID, ")&nbsp;</td>\n                <td class=\"text-center\">&nbsp;").concat(displayNumOrEmpty(item.averagePrice, (item.averagePrice).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })), "&nbsp;</td>\n                <td class=\"text-center\">&nbsp;").concat(displayNumOrEmpty(item.averagePriceNQ, (item.averagePriceNQ).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })), "&nbsp;</td>\n                <td class=\"text-center\">&nbsp;").concat(displayNumOrEmpty(item.averagePriceHQ, (item.averagePriceHQ).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })), "&nbsp;</td>\n                <td class=\"text-center\">&nbsp;").concat(displayNumOrEmpty(item.regularSaleVelocity, (item.regularSaleVelocity).toLocaleString('de-DE', { minimumFractionDigits: 3, maximumFractionDigits: 3 })), "&nbsp;</td>\n                <td class=\"text-center\">&nbsp;").concat(displayNumOrEmpty(item.nqSaleVelocity, (item.nqSaleVelocity).toLocaleString('de-DE', { minimumFractionDigits: 3, maximumFractionDigits: 3 })), "&nbsp;</td>\n                <td class=\"text-center\">&nbsp;").concat(displayNumOrEmpty(item.hqSaleVelocity, (item.hqSaleVelocity).toLocaleString('de-DE', { minimumFractionDigits: 3, maximumFractionDigits: 3 })), "&nbsp;</td>\n            </tr>");
         }
         for (var i = 0, l = top.length; i < l; i++) {
             topBody.innerHTML += createTR(i + 1, top[i]);

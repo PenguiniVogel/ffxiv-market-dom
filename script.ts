@@ -144,7 +144,10 @@ module Script {
         console.debug('All loaded!', responses);
 
         let cheapest: {
-            [id: number]: WorldResponseItem
+            [id: number]: {
+                nq: WorldResponseItem,
+                hq: WorldResponseItem
+            }
         } = {};
 
         for (let i = 0, l = WORLDS.length; i < l; i ++) {
@@ -153,34 +156,53 @@ module Script {
 
             for (let item of data.items) {
                 if (!cheapest[item.itemID]) {
-                    cheapest[item.itemID] = item;
+                    cheapest[item.itemID] = {
+                        nq: item,
+                        hq: item
+                    };
                 }
 
                 if (world == 'Moogle') {
-                    document.querySelector(`[data-id="${item.itemID}"] [data-recentsales]`).innerHTML = `Recently sold: ${item.regularSaleVelocity.toFixed(0)} (stack) ~${item.averagePrice.toFixed(0)} Gil`;
+                    document.querySelector(`[data-id="${item.itemID}"] [data-recentsales]`).innerHTML = `Recently sold: ${item.nqSaleVelocity.toFixed(0)} (nq) ~${item.averagePriceNQ.toFixed(0)} Gil / ${item.hqSaleVelocity.toFixed(0)} (hq) ~${item.averagePriceHQ.toFixed(0)} Gil`;
                 }
 
-                if (item.minPrice < cheapest[item.itemID].minPrice) {
-                    cheapest[item.itemID] = item;
+                if (item.minPriceNQ < cheapest[item.itemID].nq.minPriceNQ) {
+                    cheapest[item.itemID].nq = item;
+                }
+
+                if (item.minPriceHQ < cheapest[item.itemID].nq.minPriceHQ) {
+                    cheapest[item.itemID].hq = item;
                 }
             }
         }
 
         for (let item_id of Object.keys(cheapest)) {
-            let item: WorldResponseItem = cheapest[item_id];
-            let main = document.querySelector(`[data-id="${item.itemID}"]`);
+            let itemNQ: WorldResponseItem = cheapest[item_id].nq;
+            let itemHQ: WorldResponseItem = cheapest[item_id].hq;
+            let main = document.querySelector(`[data-id="${itemNQ.itemID}"]`);
 
-            main.querySelector('[data-cheapestworld]').innerHTML = item.worldName;
-            main.querySelector('[data-cheapestprice]').innerHTML = `${item.minPrice} Gil`;
+            main.querySelector('[data-cheapestworld-nq]').innerHTML = itemNQ.worldName;
+            main.querySelector('[data-cheapestprice-nq]').innerHTML = `${itemNQ.minPriceNQ} Gil (NQ)`;
+
+            main.querySelector('[data-cheapestworld-hq]').innerHTML = itemHQ.worldName;
+            main.querySelector('[data-cheapestprice-hq]').innerHTML = `${itemHQ.minPriceHQ} Gil (HQ)`;
 
             let moogle = responses['Moogle'];
-            let homeItem = moogle.items[moogle.indexMap[item.itemID]];
-            let max = Math.max(homeItem.minPrice, item.minPrice * 1.05);
-            let min = Math.min(homeItem.minPrice, item.minPrice * 1.05);
-            let profit = homeItem.minPrice > item.minPrice * 1.05;
+            let homeItem = moogle.items[moogle.indexMap[itemNQ.itemID]];
 
-            main.querySelector('[data-currentprice]').innerHTML = `${homeItem.minPrice} Gil`;
-            main.querySelector('[data-cheapestdiff]').innerHTML = `<span class="${profit ? 'text-success' : 'text-danger'}">${profit ? '+' : '-'}${(((max - min)/max) * 100).toFixed(2)}%</span>`;
+            let maxNQ = Math.max(homeItem.minPriceNQ, itemNQ.minPriceNQ * 1.05);
+            let minNQ = Math.min(homeItem.minPriceNQ, itemNQ.minPriceNQ * 1.05);
+            let profitNQ = homeItem.minPriceNQ > itemNQ.minPriceNQ * 1.05;
+
+            let maxHQ = Math.max(homeItem.minPriceHQ, itemHQ.minPriceHQ * 1.05);
+            let minHQ = Math.min(homeItem.minPriceHQ, itemHQ.minPriceHQ * 1.05);
+            let profitHQ = homeItem.minPriceHQ > itemHQ.minPriceHQ * 1.05;
+
+            main.querySelector('[data-currentprice-nq]').innerHTML = `${homeItem.minPriceNQ} Gil (NQ)`;
+            main.querySelector('[data-cheapestdiff-nq]').innerHTML = `<span class="${profitNQ ? 'text-success' : 'text-danger'}">${profitNQ ? '+' : '-'}${(((maxNQ - minNQ)/maxNQ) * 100).toFixed(2)}%</span>`;
+
+            main.querySelector('[data-currentprice-hq]').innerHTML = `${homeItem.minPriceHQ} Gil (HQ)`;
+            main.querySelector('[data-cheapestdiff-hq]').innerHTML = `<span class="${profitHQ ? 'text-success' : 'text-danger'}">${profitHQ ? '+' : '-'}${(((maxHQ - minHQ)/maxHQ) * 100).toFixed(2)}%</span>`;
         }
     }
 
@@ -193,18 +215,21 @@ module Script {
                         <img width="28" alt="2x" src="https://universalis-ffxiv.github.io/universalis-assets/icon2x/${id}.png" />
                     </div>
                     <div class="col">
-                        <div><a class="nav-link" href="https://universalis.app/market/${id}" target="_blank">${ffxiv_item_map[`${id}`].en}</a> <span class="small text-secondary" data-currentprice></span></div>
+                        <div><a class="nav-link" href="https://universalis.app/market/${id}" target="_blank">${ffxiv_item_map[`${id}`].en}</a> <span class="small text-secondary" data-currentprice-nq></span><span class="small text-secondary"> / </span><span class="small text-secondary" data-currentprice-hq></span></div>
                         <div class="col small text-secondary" data-recentsales>Recently sold: ???</div>
                     </div>
                 </div>
             </div>
             <div class="col">
                 <div class="row">
-                    <div class="col" data-cheapestworld>???</div>
+                    <div class="col" data-cheapestworld-nq>???</div>
+                    <div class="col-3 small" data-cheapestprice-nq>???</div>
+                    <div class="col-3" data-cheapestdiff-nq>???</div>
                 </div>
                 <div class="row">
-                    <div class="col-3 small" data-cheapestprice>???</div>
-                    <div class="col-3" data-cheapestdiff>???</div>
+                    <div class="col" data-cheapestworld-hq>???</div>
+                    <div class="col-3 small" data-cheapestprice-hq>???</div>
+                    <div class="col-3" data-cheapestdiff-hq>???</div>
                 </div>
             </div>
         </div>
@@ -281,7 +306,7 @@ module Script {
         console.debug(top);
 
         function createTR(i: number, item: WorldResponseItem): string {
-            function displayNoneOrEmpty(input: number, outStr: string): string {
+            function displayNumOrEmpty(input: number, outStr: string): string {
                 return input < 0.0001 ? '<span class="text-danger">---</span>' : outStr;
             }
 
@@ -296,12 +321,12 @@ module Script {
                 </td>
                 <td>&nbsp;${ffxiv_item_map[item.itemID].en}&nbsp;</td>
                 <td class="text-secondary text-center">&nbsp;(${item.itemID})&nbsp;</td>
-                <td class="text-center">&nbsp;${displayNoneOrEmpty(item.averagePrice, (item.averagePrice).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}&nbsp;</td>
-                <td class="text-center">&nbsp;${displayNoneOrEmpty(item.averagePriceNQ, (item.averagePriceNQ).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}&nbsp;</td>
-                <td class="text-center">&nbsp;${displayNoneOrEmpty(item.averagePriceHQ, (item.averagePriceHQ).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}&nbsp;</td>
-                <td class="text-center">&nbsp;${displayNoneOrEmpty(item.regularSaleVelocity, (item.regularSaleVelocity).toFixed(3))}&nbsp;</td>
-                <td class="text-center">&nbsp;${displayNoneOrEmpty(item.nqSaleVelocity, (item.nqSaleVelocity).toFixed(3))}&nbsp;</td>
-                <td class="text-center">&nbsp;${displayNoneOrEmpty(item.hqSaleVelocity, (item.hqSaleVelocity).toFixed(3))}&nbsp;</td>
+                <td class="text-center">&nbsp;${displayNumOrEmpty(item.averagePrice, (item.averagePrice).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}&nbsp;</td>
+                <td class="text-center">&nbsp;${displayNumOrEmpty(item.averagePriceNQ, (item.averagePriceNQ).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}&nbsp;</td>
+                <td class="text-center">&nbsp;${displayNumOrEmpty(item.averagePriceHQ, (item.averagePriceHQ).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}&nbsp;</td>
+                <td class="text-center">&nbsp;${displayNumOrEmpty(item.regularSaleVelocity, (item.regularSaleVelocity).toLocaleString('de-DE', { minimumFractionDigits: 3, maximumFractionDigits: 3 }))}&nbsp;</td>
+                <td class="text-center">&nbsp;${displayNumOrEmpty(item.nqSaleVelocity, (item.nqSaleVelocity).toLocaleString('de-DE', { minimumFractionDigits: 3, maximumFractionDigits: 3 }))}&nbsp;</td>
+                <td class="text-center">&nbsp;${displayNumOrEmpty(item.hqSaleVelocity, (item.hqSaleVelocity).toLocaleString('de-DE', { minimumFractionDigits: 3, maximumFractionDigits: 3 }))}&nbsp;</td>
             </tr>`;
         }
 
