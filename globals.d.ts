@@ -6,7 +6,9 @@ declare var ffxiv_item_map: {
 
 declare var ffxiv_market_map: number[];
 
-declare var weekly_dump: WorldResponseItem[];
+declare var ffxiv_weekly_dump: {
+    [world: string]: WorldResponseItem[]
+};
 
 interface WorldResponseItem {
     itemID: number,

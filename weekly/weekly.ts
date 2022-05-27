@@ -1,10 +1,13 @@
 module Weekly {
 
-    let output = document.getElementById('weekly-output');
+    const worldIn = <HTMLInputElement>document.getElementById('worldIn');
+    const output = document.getElementById('weekly-output');
 
     let checkmap: {
         [id: number]: boolean
     } = {};
+
+    let world = 'Moogle';
 
     let buckets: number[][] = [];
     let bucketAt = 0;
@@ -12,6 +15,8 @@ module Weekly {
     let all_items: WorldResponseItem[] = [];
 
     export function generate(): void {
+        all_items = [];
+        
         for (let itemId of ffxiv_market_map) {
             checkmap[itemId] = false;
         }
@@ -20,7 +25,9 @@ module Weekly {
             buckets.push(ffxiv_market_map.slice(i, i + 100));
         }
 
-        output.innerHTML = 'Generating...';
+        world = worldIn.value ?? 'Moogle';
+
+        output.innerHTML = `Generating... (${world})`;
 
         fetchBucket(bucketAt);
     }
@@ -29,13 +36,18 @@ module Weekly {
         if (bucketAt >= buckets.length) {
             output.innerHTML = 'Done!';
 
-            // log missing
-            console.debug(JSON.stringify(all_items));
-            console.debug(all_items);
+            // extract top 1000 bestsellers to reduce data-set size
+            let sorted = all_items.sort((a, b) => a.regularSaleVelocity > b.regularSaleVelocity ? -1 : 1)
+                .slice(0, 1000)
+                .sort((a, b) => a.averagePrice > b.averagePrice ? -1 : 1);
+
+            console.debug(`ffxiv_weekly_dump['${world}'] = ${JSON.stringify(sorted)};`);
+            console.debug(all_items, sorted);
+
+            // missing (empty collection)
             console.debug(Object.keys(checkmap).filter(x => checkmap[x] == false).map(x => `${ffxiv_item_map[x].en} (${x})`));
 
-            // fetch missing
-            fetch(`https://universalis.app/api/Moogle/${Object.keys(checkmap).filter(x => checkmap[x] == false).join('%2C')}?listings=0&entries=0`).then(res => {
+            fetch(`https://universalis.app/api/${world}/${Object.keys(checkmap).filter(x => checkmap[x] == false).join('%2C')}?listings=0&entries=0`).then(res => {
                 res.json().then(json => {
                     console.debug(json);
                 });
@@ -44,7 +56,7 @@ module Weekly {
             return;
         }
 
-        fetch(`https://universalis.app/api/Moogle/${buckets[bucketId].join('%2C')}?listings=0&entries=0`).then(res => {
+        fetch(`https://universalis.app/api/${world}/${buckets[bucketId].join('%2C')}?listings=0&entries=0`).then(res => {
             res.json().then(json => {
                 let resp: WorldResponse = typeof json == 'object' ? json : JSON.parse(json);
 

@@ -1,12 +1,32 @@
 module Cookie {
 
+    export interface Settings {
+        topn: number,
+        displayFormat: string
+    }
+
+    export let storedSettings: Settings = {
+        topn: 10,
+        displayFormat: 'template-df-expanded'
+    };
+
+    export let homeWorld = 'Moogle';
     export let storedList: number[] = [];
 
     export function save(): void {
+        _write('ffxiv-market-dom-settings', JSON.stringify(storedSettings));
+        _write('ffxiv-market-dom-homeWorld', homeWorld);
         _write('ffxiv-market-dom-mylist', storedList.join('|'));
     }
 
-    export function read(): void {
+    function load(): void {
+        // settings
+        storedSettings = { ...storedSettings, ...JSON.parse(_read('ffxiv-market-dom-settings')) ?? storedSettings };
+
+        // homeWorld
+        homeWorld = _read('ffxiv-market-dom-homeWorld') ?? 'Moogle';
+
+        // list
         let mylist = _read('ffxiv-market-dom-mylist');
 
         if (mylist.length == 0 || !/([\d+]\|?)+/.test(mylist)) {
@@ -21,7 +41,6 @@ module Cookie {
                 storedList.push(parsed);
             }
         }
-        // console.debug(mylist, split, storedList);
     }
 
     function _read(name: string): string {
@@ -39,6 +58,6 @@ module Cookie {
     }
 
     // Read stored
-    read();
+    load();
 
 }

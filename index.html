@@ -10,9 +10,17 @@
     <script src="lib/bootstrap/js/bootstrap.bundle.js"></script>
 
     <script src="lib/ffxiv_item_map.js"></script>
+
     <script src="lib/ffxiv_weekly_dump.js"></script>
+    <script src="lib/ffxiv_weekly_dump_cerberus.js"></script>
+    <script src="lib/ffxiv_weekly_dump_louisoix.js"></script>
+    <script src="lib/ffxiv_weekly_dump_moogle.js"></script>
+    <script src="lib/ffxiv_weekly_dump_omega.js"></script>
+    <script src="lib/ffxiv_weekly_dump_ragnarok.js"></script>
+    <script src="lib/ffxiv_weekly_dump_spriggan.js"></script>
 
     <script src="Cookie.js"></script>
+    <script src="TemplateRender.js"></script>
 
     <style>
         [data-itemid]:hover {
@@ -29,8 +37,17 @@
     <h3 class="text-center">FFXIV Market Dom</h3>
     <div class="container">
         <nav class="navbar">
+            <select id="worldSelect" class="nav-item text-light bg-dark">
+                <option>Cerberus</option>
+                <option>Louisoix</option>
+                <option selected>Moogle</option>
+                <option>Omega</option>
+                <option>Ragnarok</option>
+                <option>Spriggan</option>
+            </select>
             <button data-page="1" class="nav-item text-light bg-success">My Tacked</button>
             <button data-page="2" class="nav-item">Bestsellers</button>
+            <button data-page="3" class="nav-item">Settings</button>
         </nav>
     </div>
     <hr />
@@ -43,15 +60,233 @@
                     <div id="suggestions" style="position: absolute; max-height: 500px; overflow: auto;" class="col-6">
                     </div>
                 </div>
-                <div class="col-2">
+                <!--div class="col-2">
                     <div class="btn btn-success">Add</div>
-                </div>
+                </div-->
             </div>
         </div>
         <div id="item-container" class="container">
             <div class="row" style="margin-bottom: 12px;">
                 <div class="col-md-8">Information and % across Chaos to make some gil</div>
             </div>
+
+            <template id="template-df-expanded">
+            <div class="row">
+                <div class="container">
+                    <table class="table-borderless">
+                        <tbody>
+                            <tr>
+                                <table class="table-borderless">
+                                    <tbody>
+                                    <tr>
+                                        <td data-delete onclick="Script.removeTracking(${itemID});" class="col-auto">
+                                            <img width="24" alt="2x" src="https://universalis-ffxiv.github.io/universalis-assets/icon2x/${itemID}.png" />
+                                        </td>
+                                        <td>&nbsp;${itemName}&nbsp;</td>
+                                    </tr>
+                                    <tr>
+                                        <table>
+                                            <tbody>
+                                            <tr>
+                                                <td>
+                                                    <table>
+                                                        <thead>
+                                                        <tr>
+                                                            <th class="text-center" colspan="3">&nbsp;${homeWorldName}&nbsp;</th>
+                                                        </tr>
+                                                        <tr>
+                                                            <th>&nbsp;Quality&nbsp;</th>
+                                                            <th>&nbsp;Price&nbsp;</th>
+                                                            <th>&nbsp;Sale Velocity&nbsp;</th>
+                                                        </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                        <tr>
+                                                            <td>&nbsp;NQ&nbsp;</td>
+                                                            <td>&nbsp;${homeNQPrice}&nbsp;</td>
+                                                            <td>&nbsp;${homeNQSaleVelocity}&nbsp;</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>&nbsp;HQ&nbsp;</td>
+                                                            <td>&nbsp;${homeHQPrice}&nbsp;</td>
+                                                            <td>&nbsp;${homeHQSaleVelocity}&nbsp;</td>
+                                                        </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </td>
+                                                <td class="fw-bold">
+                                                    <table>
+                                                        <thead>
+                                                        <tr>
+                                                            <td>&nbsp;&gt;&nbsp;</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>&nbsp;&gt;&nbsp;</td>
+                                                        </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                        <tr>
+                                                            <td>&nbsp;&gt;&nbsp;</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>&nbsp;&gt;&nbsp;</td>
+                                                        </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </td>
+                                                <td>
+                                                    <table>
+                                                        <thead>
+                                                        <tr>
+                                                            <th class="text-center" colspan="4">&nbsp;Cheapest&nbsp;</th>
+                                                        </tr>
+                                                        <tr>
+                                                            <th>&nbsp;World&nbsp;</th>
+                                                            <th>&nbsp;Quality&nbsp;</th>
+                                                            <th>&nbsp;Price&nbsp;</th>
+                                                            <th class="text-center">&nbsp;Sale Velocity&nbsp;</th>
+                                                            <th class="text-center">&nbsp;%&nbsp;</th>
+                                                        </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                        <tr>
+                                                            <td>&nbsp;${cheapestNQWorldName}&nbsp;</td>
+                                                            <td>&nbsp;NQ&nbsp;</td>
+                                                            <td>&nbsp;${cheapestNQPrice}&nbsp;</td>
+                                                            <td>&nbsp;${cheapestNQSaleVelocity}&nbsp;</td>
+                                                            <td>&nbsp;${cheapestNQDiff}&nbsp;</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>&nbsp;${cheapestHQWorldName}&nbsp;</td>
+                                                            <td>&nbsp;HQ&nbsp;</td>
+                                                            <td>&nbsp;${cheapestHQPrice}&nbsp;</td>
+                                                            <td>&nbsp;${cheapestHQSaleVelocity}&nbsp;</td>
+                                                            <td>&nbsp;${cheapestHQDiff}&nbsp;</td>
+                                                        </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </td>
+                                                <td class="fw-bold">
+                                                    <table>
+                                                        <thead>
+                                                        <tr>
+                                                            <td>&nbsp;&gt;&nbsp;</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>&nbsp;&gt;&nbsp;</td>
+                                                        </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                        <tr>
+                                                            <td>&nbsp;&gt;&nbsp;</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>&nbsp;&gt;&nbsp;</td>
+                                                        </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </td>
+                                                <td>
+                                                    <table>
+                                                        <thead>
+                                                        <tr>
+                                                            <th class="text-center" colspan="4">&nbsp;Expensive&nbsp;</th>
+                                                        </tr>
+                                                        <tr>
+                                                            <th>&nbsp;World&nbsp;</th>
+                                                            <th>&nbsp;Quality&nbsp;</th>
+                                                            <th>&nbsp;Price&nbsp;</th>
+                                                            <th>&nbsp;Sale Velocity&nbsp;</th>
+                                                            <th class="text-center">&nbsp;%&nbsp;</th>
+                                                        </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                        <tr>
+                                                            <td>&nbsp;${expensiveNQWorldName}&nbsp;</td>
+                                                            <td>&nbsp;NQ&nbsp;</td>
+                                                            <td>&nbsp;${expensiveNQPrice}&nbsp;</td>
+                                                            <td>&nbsp;${expensiveNQSaleVelocity}&nbsp;</td>
+                                                            <td>&nbsp;${expensiveNQDiff}&nbsp;</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>&nbsp;${expensiveHQWorldName}&nbsp;</td>
+                                                            <td>&nbsp;HQ&nbsp;</td>
+                                                            <td>&nbsp;${expensiveHQPrice}&nbsp;</td>
+                                                            <td>&nbsp;${expensiveHQSaleVelocity}&nbsp;</td>
+                                                            <td>&nbsp;${expensiveHQDiff}&nbsp;</td>
+                                                        </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                                <hr />
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            </template>
+            <template id="template-df-compact">
+                <div class="row">
+                    <div class="container">
+                        <table class="table-borderless">
+                            <tbody>
+                            <tr>
+                                <td data-delete onclick="Script.removeTracking(${itemID});" class="col-auto">
+                                    <img width="24" alt="2x" src="https://universalis-ffxiv.github.io/universalis-assets/icon2x/${itemID}.png" />
+                                </td>
+                                <td>&nbsp;${itemName}&nbsp;</td>
+                            </tr>
+                            <tr>
+                                <table>
+                                    <tbody>
+                                    <tr>
+                                        <td>&nbsp;NQ &gt;&nbsp;</td>
+                                        <td>&nbsp;${homeWorldName}&nbsp;</td>
+                                        <td>&nbsp;${homeNQPrice}&nbsp;</td>
+                                        <td>&nbsp;${homeNQSaleVelocity}&nbsp;</td>
+                                        <td>&nbsp;Cheapest:&nbsp;</td>
+                                        <td>&nbsp;${cheapestNQWorldName}&nbsp;</td>
+                                        <td>&nbsp;${cheapestNQPrice}&nbsp;</td>
+                                        <td>&nbsp;${cheapestNQSaleVelocity}&nbsp;</td>
+                                        <td>&nbsp;${cheapestNQDiff}&nbsp;</td>
+                                        <td>&nbsp;Expensive:&nbsp;</td>
+                                        <td>&nbsp;${expensiveNQWorldName}&nbsp;</td>
+                                        <td>&nbsp;${expensiveNQPrice}&nbsp;</td>
+                                        <td>&nbsp;${expensiveNQSaleVelocity}&nbsp;</td>
+                                        <td>&nbsp;${expensiveNQDiff}&nbsp;</td>
+                                    </tr>
+                                    <tr>
+                                        <td>&nbsp;HQ &gt;&nbsp;</td>
+                                        <td>&nbsp;${homeWorldName}&nbsp;</td>
+                                        <td>&nbsp;${homeHQPrice}&nbsp;</td>
+                                        <td>&nbsp;${homeHQSaleVelocity}&nbsp;</td>
+                                        <td>&nbsp;Cheapest:&nbsp;</td>
+                                        <td>&nbsp;${cheapestHQWorldName}&nbsp;</td>
+                                        <td>&nbsp;${cheapestHQPrice}&nbsp;</td>
+                                        <td>&nbsp;${cheapestHQSaleVelocity}&nbsp;</td>
+                                        <td>&nbsp;${cheapestHQDiff}&nbsp;</td>
+                                        <td>&nbsp;Expensive:&nbsp;</td>
+                                        <td>&nbsp;${expensiveHQWorldName}&nbsp;</td>
+                                        <td>&nbsp;${expensiveHQPrice}&nbsp;</td>
+                                        <td>&nbsp;${expensiveHQSaleVelocity}&nbsp;</td>
+                                        <td>&nbsp;${expensiveHQDiff}&nbsp;</td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </tr>
+                            </tbody>
+                        </table>
+                        <hr />
+                    </div>
+                </div>
+            </template>
+
         </div>
     </e>
 
@@ -88,6 +323,57 @@
                     <td class="text-center">&nbsp;3&nbsp;</td>
                     <td class="text-center">&nbsp;0&nbsp;</td>
                 </tr-->
+                </tbody>
+            </table>
+        </div>
+    </e>
+
+    <e id="page3" style="display: none;" data-anchor="settings">
+        <div class="container">
+            <table>
+                <thead>
+                <tr>
+                    <th>Setting</th>
+                    <th>Value</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>&nbsp;Display top(n) in tracked:&nbsp;</td>
+                    <td>
+                        <select class="text-light bg-dark">
+                            <option>0</option>
+                            <option>1</option>
+                            <option>2</option>
+                            <option>3</option>
+                            <option>4</option>
+                            <option>5</option>
+                            <option>6</option>
+                            <option>7</option>
+                            <option>8</option>
+                            <option>9</option>
+                            <option selected>10</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <hr />
+                    </td>
+                </tr>
+                <tr>
+                    <td>&nbsp;Display format:&nbsp;</td>
+                    <td>
+                        <div>
+                            <label for="setting-df-expanded">Expanded</label>
+                            <input id="setting-df-expanded" type="radio" name="setting-df" checked onclick="Cookie.storedSettings.displayFormat = 'template-df-expanded';Cookie.save();" />
+                        </div>
+                        <div>
+                            <label for="setting-df-compact">Compact</label>
+                            <input id="setting-df-compact" type="radio" name="setting-df" onclick="Cookie.storedSettings.displayFormat = 'template-df-compact';Cookie.save();" />
+                        </div>
+                    </td>
+                </tr>
                 </tbody>
             </table>
         </div>

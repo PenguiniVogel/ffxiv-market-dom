@@ -2,7 +2,8 @@ module Script {
 
     const PAGE_MAP = {
         'main': 1,
-        'bestseller': 2
+        'bestseller': 2,
+        'settings': 3
     };
 
     const WORLDS: string[] = [
@@ -15,7 +16,6 @@ module Script {
     ];
 
     let ITEM_LIST : number[] = [
-        5371,
         21800,
         ...Cookie.storedList
     ];
@@ -27,15 +27,25 @@ module Script {
         [world: string]: WorldResponse
     } = {};
 
+    let trackMinMax: {
+        [itemID: number]: {
+            home: WorldResponseItem,
+            cheapestNQ: WorldResponseItem,
+            cheapestHQ: WorldResponseItem,
+            expensiveNQ: WorldResponseItem,
+            expensiveHQ: WorldResponseItem,
+        }
+    } = {};
+
     let container = document.getElementById('item-container');
     let suggestions = document.getElementById('suggestions');
     let searchInput = <HTMLInputElement>document.getElementById('search-input');
     let topBody = <HTMLElement>document.querySelector('#topSales tbody');
 
     function init(): void {
-        for (let item of ITEM_LIST) {
-            container.innerHTML += createHTMLRow(item);
-        }
+        // for (let item of ITEM_LIST) {
+        //     container.innerHTML += createHTMLRow(item);
+        // }
 
         function hideEvent(e: KeyboardEvent): void {
             if (e.code == 'Escape') {
@@ -74,6 +84,9 @@ module Script {
         if (window?.location?.href?.indexOf('#bestseller') > -1) {
             page(PAGE_MAP['bestseller']);
         }
+        if (window?.location?.href?.indexOf('#settings') > -1) {
+            page(PAGE_MAP['settings']);
+        }
 
         loadData();
         loadWeekly();
@@ -81,6 +94,10 @@ module Script {
 
     function loadData(): void {
         responses = {};
+
+        if (ITEM_LIST.length < 1) {
+            return;
+        }
 
         for (let k of WORLDS) {
             fetch(`https://universalis.app/api/${k}/${ITEM_LIST.join('%2C')}?listings=0&entries=0`).then(res => {
@@ -134,6 +151,10 @@ module Script {
         }
     }
 
+    function displayNumOrEmpty(input: number, outStr?: string): string {
+        return input < 0.0001 || isNaN(input) || !isFinite(input) ? '<span class="text-danger">---</span>' : outStr ?? `${input}`;
+    }
+
     function checkAllAvailable(): void {
         for (let k of WORLDS) {
             if (!responses[k]?.items) {
@@ -143,97 +164,145 @@ module Script {
 
         console.debug('All loaded!', responses);
 
-        let cheapest: {
-            [id: number]: {
-                nq: WorldResponseItem,
-                hq: WorldResponseItem
-            }
-        } = {};
-
         for (let i = 0, l = WORLDS.length; i < l; i ++) {
             let world = WORLDS[i];
             let data = responses[world];
 
             for (let item of data.items) {
-                if (!cheapest[item.itemID]) {
-                    cheapest[item.itemID] = {
-                        nq: item,
-                        hq: item
+                if (!trackMinMax[item.itemID]) {
+                    trackMinMax[item.itemID] = {
+                        home: item,
+                        cheapestNQ: item,
+                        cheapestHQ: item,
+                        expensiveNQ: item,
+                        expensiveHQ: item
                     };
                 }
 
-                if (world == 'Moogle') {
-                    document.querySelector(`[data-id="${item.itemID}"] [data-recentsales]`).innerHTML = `Recently sold: ${item.nqSaleVelocity.toFixed(0)} (nq) ~${item.averagePriceNQ.toFixed(0)} Gil / ${item.hqSaleVelocity.toFixed(0)} (hq) ~${item.averagePriceHQ.toFixed(0)} Gil`;
+                if (world == Cookie.homeWorld) {
+                    trackMinMax[item.itemID].home = item;
                 }
 
-                if (item.minPriceNQ < cheapest[item.itemID].nq.minPriceNQ) {
-                    cheapest[item.itemID].nq = item;
+                if (item.minPriceNQ < trackMinMax[item.itemID].cheapestNQ.minPriceNQ) {
+                    trackMinMax[item.itemID].cheapestNQ = item;
                 }
-
-                if (item.minPriceHQ < cheapest[item.itemID].nq.minPriceHQ) {
-                    cheapest[item.itemID].hq = item;
+                if (item.minPriceHQ < trackMinMax[item.itemID].cheapestHQ.minPriceHQ) {
+                    trackMinMax[item.itemID].cheapestHQ = item;
+                }
+                if (item.minPriceNQ > trackMinMax[item.itemID].expensiveNQ.minPriceNQ) {
+                    trackMinMax[item.itemID].expensiveNQ = item;
+                }
+                if (item.minPriceHQ > trackMinMax[item.itemID].expensiveHQ.minPriceHQ) {
+                    trackMinMax[item.itemID].expensiveHQ = item;
                 }
             }
         }
 
-        for (let item_id of Object.keys(cheapest)) {
-            let itemNQ: WorldResponseItem = cheapest[item_id].nq;
-            let itemHQ: WorldResponseItem = cheapest[item_id].hq;
-            let main = document.querySelector(`[data-id="${itemNQ.itemID}"]`);
+        // for (let item_id of Object.keys(cheapest)) {
+        //     let itemNQ: WorldResponseItem = cheapest[item_id].nq;
+        //     let itemHQ: WorldResponseItem = cheapest[item_id].hq;
+        //     let main = document.querySelector(`[data-id="${itemNQ.itemID}"]`);
+        //
+        //     main.querySelector('[data-cheapestworld-nq]').innerHTML = itemNQ.worldName;
+        //     main.querySelector('[data-cheapestprice-nq]').innerHTML = `${itemNQ.minPriceNQ} Gil (NQ)`;
+        //
+        //     main.querySelector('[data-cheapestworld-hq]').innerHTML = itemHQ.worldName;
+        //     main.querySelector('[data-cheapestprice-hq]').innerHTML = `${itemHQ.minPriceHQ} Gil (HQ)`;
+        //
+        //     let homeWorld = responses[Cookie.homeWorld];
+        //     let homeItem = homeWorld.items[homeWorld.indexMap[itemNQ.itemID]];
+        //
+        //     let maxNQ = Math.max(homeItem.minPriceNQ, itemNQ.minPriceNQ * 1.05);
+        //     let minNQ = Math.min(homeItem.minPriceNQ, itemNQ.minPriceNQ * 1.05);
+        //     let profitNQ = homeItem.minPriceNQ > itemNQ.minPriceNQ * 1.05;
+        //
+        //     let maxHQ = Math.max(homeItem.minPriceHQ, itemHQ.minPriceHQ * 1.05);
+        //     let minHQ = Math.min(homeItem.minPriceHQ, itemHQ.minPriceHQ * 1.05);
+        //     let profitHQ = homeItem.minPriceHQ > itemHQ.minPriceHQ * 1.05;
+        //
+        //     main.querySelector('[data-currentprice-nq]').innerHTML = `${homeItem.minPriceNQ} Gil (NQ)`;
+        //     main.querySelector('[data-cheapestdiff-nq]').innerHTML = `<span class="${profitNQ ? 'text-success' : 'text-danger'}">${profitNQ ? '+' : '-'}${(((maxNQ - minNQ)/maxNQ) * 100).toFixed(2)}%</span>`;
+        //
+        //     main.querySelector('[data-currentprice-hq]').innerHTML = `${homeItem.minPriceHQ} Gil (HQ)`;
+        //     main.querySelector('[data-cheapestdiff-hq]').innerHTML = `<span class="${profitHQ ? 'text-success' : 'text-danger'}">${profitHQ ? '+' : '-'}${(((maxHQ - minHQ)/maxHQ) * 100).toFixed(2)}%</span>`;
+        // }
 
-            main.querySelector('[data-cheapestworld-nq]').innerHTML = itemNQ.worldName;
-            main.querySelector('[data-cheapestprice-nq]').innerHTML = `${itemNQ.minPriceNQ} Gil (NQ)`;
-
-            main.querySelector('[data-cheapestworld-hq]').innerHTML = itemHQ.worldName;
-            main.querySelector('[data-cheapestprice-hq]').innerHTML = `${itemHQ.minPriceHQ} Gil (HQ)`;
-
-            let moogle = responses['Moogle'];
-            let homeItem = moogle.items[moogle.indexMap[itemNQ.itemID]];
-
-            let maxNQ = Math.max(homeItem.minPriceNQ, itemNQ.minPriceNQ * 1.05);
-            let minNQ = Math.min(homeItem.minPriceNQ, itemNQ.minPriceNQ * 1.05);
-            let profitNQ = homeItem.minPriceNQ > itemNQ.minPriceNQ * 1.05;
-
-            let maxHQ = Math.max(homeItem.minPriceHQ, itemHQ.minPriceHQ * 1.05);
-            let minHQ = Math.min(homeItem.minPriceHQ, itemHQ.minPriceHQ * 1.05);
-            let profitHQ = homeItem.minPriceHQ > itemHQ.minPriceHQ * 1.05;
-
-            main.querySelector('[data-currentprice-nq]').innerHTML = `${homeItem.minPriceNQ} Gil (NQ)`;
-            main.querySelector('[data-cheapestdiff-nq]').innerHTML = `<span class="${profitNQ ? 'text-success' : 'text-danger'}">${profitNQ ? '+' : '-'}${(((maxNQ - minNQ)/maxNQ) * 100).toFixed(2)}%</span>`;
-
-            main.querySelector('[data-currentprice-hq]').innerHTML = `${homeItem.minPriceHQ} Gil (HQ)`;
-            main.querySelector('[data-cheapestdiff-hq]').innerHTML = `<span class="${profitHQ ? 'text-success' : 'text-danger'}">${profitHQ ? '+' : '-'}${(((maxHQ - minHQ)/maxHQ) * 100).toFixed(2)}%</span>`;
+        for (let key of ITEM_LIST) {
+            addTrackingRow(key);
         }
     }
 
-    function createHTMLRow(id: number): string {
-        return `
-        <div data-id="${id}" class="row" style="margin-bottom: 5px;">
-            <div class="col">
-                <div class="row">
-                    <div class="col-1"${(id == 5371 || id == 21800) ? '' : ` data-delete onclick="Script.removeTracking(${id});"`}>
-                        <img width="28" alt="2x" src="https://universalis-ffxiv.github.io/universalis-assets/icon2x/${id}.png" />
-                    </div>
-                    <div class="col">
-                        <div><a class="nav-link" href="https://universalis.app/market/${id}" target="_blank">${ffxiv_item_map[`${id}`].en}</a> <span class="small text-secondary" data-currentprice-nq></span><span class="small text-secondary"> / </span><span class="small text-secondary" data-currentprice-hq></span></div>
-                        <div class="col small text-secondary" data-recentsales>Recently sold: ???</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col">
-                <div class="row">
-                    <div class="col" data-cheapestworld-nq>???</div>
-                    <div class="col-3 small" data-cheapestprice-nq>???</div>
-                    <div class="col-3" data-cheapestdiff-nq>???</div>
-                </div>
-                <div class="row">
-                    <div class="col" data-cheapestworld-hq>???</div>
-                    <div class="col-3 small" data-cheapestprice-hq>???</div>
-                    <div class="col-3" data-cheapestdiff-hq>???</div>
-                </div>
-            </div>
-        </div>
-        `;
+    function addTrackingRow(id: number): void {
+        let homeItem = trackMinMax[id].home;
+        let cheapestItemNQ = trackMinMax[id].cheapestNQ;
+        let cheapestItemHQ = trackMinMax[id].cheapestHQ;
+        let expensiveItemNQ = trackMinMax[id].expensiveNQ;
+        let expensiveItemHQ = trackMinMax[id].expensiveHQ;
+
+        let hasCheapestNQ = cheapestItemNQ.nqSaleVelocity > 0.0001 && cheapestItemNQ.minPriceNQ > 0;
+        let hasCheapestHQ = cheapestItemHQ.hqSaleVelocity > 0.0001 && cheapestItemHQ.minPriceHQ > 0;
+        let hasExpensiveNQ = expensiveItemNQ.nqSaleVelocity > 0.0001 && expensiveItemNQ.minPriceNQ > 0;
+        let hasExpensiveHQ = expensiveItemHQ.hqSaleVelocity > 0.0001 && expensiveItemHQ.minPriceHQ > 0;
+
+        let minCheapestNQ = Math.min(homeItem.minPriceNQ, cheapestItemNQ.minPriceNQ * 1.05);
+        let maxCheapestNQ = Math.max(homeItem.minPriceNQ, cheapestItemNQ.minPriceNQ * 1.05);
+        let profitCheapestNQ = homeItem.minPriceNQ > cheapestItemNQ.minPriceNQ * 1.05;
+        let cheapestNQDiff = ((maxCheapestNQ - minCheapestNQ)/maxCheapestNQ) * 100;
+
+        let minCheapestHQ = Math.min(homeItem.minPriceHQ, cheapestItemHQ.minPriceHQ * 1.05);
+        let maxCheapestHQ = Math.max(homeItem.minPriceHQ, cheapestItemHQ.minPriceHQ * 1.05);
+        let profitCheapestHQ = homeItem.minPriceHQ > cheapestItemHQ.minPriceHQ * 1.05;
+        let cheapestHQDiff = ((maxCheapestHQ - minCheapestHQ)/maxCheapestHQ) * 100;
+
+        let minExpensiveNQ = Math.min(cheapestItemNQ.minPriceNQ, expensiveItemNQ.minPriceNQ * 1.05);
+        let maxExpensiveNQ = Math.max(cheapestItemNQ.minPriceNQ, expensiveItemNQ.minPriceNQ * 1.05);
+        let profitExpensiveNQ = cheapestItemNQ.minPriceNQ < expensiveItemNQ.minPriceNQ * 1.05;
+        let expensiveNQDiff = (maxExpensiveNQ / minExpensiveNQ) * 100;
+
+        let minExpensiveHQ = Math.min(cheapestItemHQ.minPriceHQ, expensiveItemHQ.minPriceHQ * 1.05);
+        let maxExpensiveHQ = Math.max(cheapestItemHQ.minPriceHQ, expensiveItemHQ.minPriceHQ * 1.05);
+        let profitExpensiveHQ = cheapestItemHQ.minPriceHQ < expensiveItemHQ.minPriceHQ * 1.05;
+        let expensiveHQDiff = (maxExpensiveHQ / minExpensiveHQ) * 100;
+
+        function formatPrice(price: number): string {
+            return displayNumOrEmpty(price, `${price.toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} Gil`);
+        }
+
+        function formatSaleVelocity(vel: number): string {
+            return displayNumOrEmpty(vel, `${vel.toLocaleString('de-DE', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}`);
+        }
+
+        function formatDiff(profit: boolean, diff: number): string {
+            return displayNumOrEmpty(diff, `<span class="${profit ? 'text-success' : 'text-danger'}">${profit ? '+' : '-'} ${diff.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%</span>`);
+        }
+
+        let generatedRow = TemplateRender.renderTemplate(Cookie.storedSettings.displayFormat, <TemplateRender.TemplateDFExpanded>{
+            itemID: `${homeItem.itemID}`,
+            itemName: ffxiv_item_map[homeItem.itemID].en,
+            homeWorldName: homeItem.worldName,
+            homeNQPrice: formatPrice(homeItem.minPriceNQ),
+            homeNQSaleVelocity: formatSaleVelocity(homeItem.nqSaleVelocity),
+            homeHQPrice: formatPrice(homeItem.minPriceHQ),
+            homeHQSaleVelocity: formatSaleVelocity(homeItem.hqSaleVelocity),
+            cheapestNQWorldName: hasCheapestNQ ? cheapestItemNQ.worldName : '<span class="text-danger">---</span>',
+            cheapestHQWorldName: hasCheapestHQ ? cheapestItemHQ.worldName : '<span class="text-danger">---</span>',
+            cheapestNQPrice: formatPrice(cheapestItemNQ.minPriceNQ),
+            cheapestNQSaleVelocity: formatSaleVelocity(cheapestItemNQ.nqSaleVelocity),
+            cheapestNQDiff: formatDiff(profitCheapestNQ, cheapestNQDiff),
+            cheapestHQPrice: formatPrice(cheapestItemHQ.minPriceHQ),
+            cheapestHQSaleVelocity: formatSaleVelocity(cheapestItemHQ.hqSaleVelocity),
+            cheapestHQDiff: formatDiff(profitCheapestHQ, cheapestHQDiff),
+            expensiveNQWorldName: hasExpensiveNQ ? expensiveItemNQ.worldName : '<span class="text-danger">---</span>',
+            expensiveHQWorldName: hasExpensiveHQ ? expensiveItemHQ.worldName : '<span class="text-danger">---</span>',
+            expensiveNQPrice: formatPrice(expensiveItemNQ.minPriceNQ),
+            expensiveNQSaleVelocity: formatSaleVelocity(expensiveItemNQ.nqSaleVelocity),
+            expensiveNQDiff: formatDiff(profitExpensiveNQ, expensiveNQDiff),
+            expensiveHQPrice: formatPrice(expensiveItemHQ.minPriceHQ),
+            expensiveHQSaleVelocity: formatSaleVelocity(expensiveItemHQ.hqSaleVelocity),
+            expensiveHQDiff: formatDiff(profitExpensiveHQ, expensiveHQDiff),
+        });
+
+        container.innerHTML += generatedRow;
     }
 
     export function addTracking(id: number): void {
@@ -248,11 +317,11 @@ module Script {
 
         ITEM_LIST.push(id);
 
-        container.innerHTML += createHTMLRow(id);
+        // addTrackingRow(id);
 
         if (updateTimer == -1) {
             updateTimer = setTimeout(() => {
-                loadData();
+                window.location.reload();
                 updateTimer = -1;
             }, 5000);
         }
@@ -274,10 +343,6 @@ module Script {
     }
 
     export function removeTracking(id: number): void {
-        if (id == 5371 || id == 21800) {
-            return;
-        }
-
         if (confirm(`Remove ${ffxiv_item_map[id].en} (${id}) from being tracked?`)) {
             hideSearch();
 
@@ -297,19 +362,11 @@ module Script {
     }
 
     function loadWeekly(): void {
-        let sorted = weekly_dump.sort((a, b) => {
-            return a.regularSaleVelocity > b.regularSaleVelocity ? -1 : 1;
-        });
-
-        let top = sorted.slice(0, 100).sort((a, b) => a.averagePrice > b.averagePrice ? -1 : 1);
+        let top = ffxiv_weekly_dump[Cookie.homeWorld].slice(0, 100);
 
         console.debug(top);
 
         function createTR(i: number, item: WorldResponseItem): string {
-            function displayNumOrEmpty(input: number, outStr: string): string {
-                return input < 0.0001 ? '<span class="text-danger">---</span>' : outStr;
-            }
-
             return `
             <tr>
                 <td class="text-center">
