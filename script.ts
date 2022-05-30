@@ -41,6 +41,7 @@ module Script {
     let suggestions = document.getElementById('suggestions');
     let searchInput = <HTMLInputElement>document.getElementById('search-input');
     let topBody = <HTMLElement>document.querySelector('#topSales tbody');
+    let worldSelect = <HTMLSelectElement>document.querySelector('#worldSelect');
 
     function init(): void {
         // for (let item of ITEM_LIST) {
@@ -87,6 +88,22 @@ module Script {
         if (window?.location?.href?.indexOf('#settings') > -1) {
             page(PAGE_MAP['settings']);
         }
+
+        for (let i = 0, l = worldSelect.options.length; i < l; i ++) {
+            if (worldSelect.options.item(i).innerText == Cookie.homeWorld) {
+                worldSelect.selectedIndex = i;
+                break;
+            }
+        }
+
+        worldSelect.addEventListener('input', () => {
+            let option = worldSelect.selectedOptions[0].innerText;
+
+            Cookie.homeWorld = WORLDS.indexOf(option) > -1 ? option : 'Moogle';
+            Cookie.save();
+
+            window.location.reload();
+        });
 
         loadData();
         loadWeekly();
@@ -364,7 +381,9 @@ module Script {
     function loadWeekly(): void {
         let top = ffxiv_weekly_dump[Cookie.homeWorld].slice(0, 100);
 
-        console.debug(top);
+        document.querySelector('#worldBestseller').innerHTML = Cookie.homeWorld;
+
+        // console.debug(top);
 
         function createTR(i: number, item: WorldResponseItem): string {
             return `

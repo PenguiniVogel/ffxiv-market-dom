@@ -33,6 +33,7 @@ var Script;
     var suggestions = document.getElementById('suggestions');
     var searchInput = document.getElementById('search-input');
     var topBody = document.querySelector('#topSales tbody');
+    var worldSelect = document.querySelector('#worldSelect');
     function init() {
         // for (let item of ITEM_LIST) {
         //     container.innerHTML += createHTMLRow(item);
@@ -71,6 +72,18 @@ var Script;
         if (((_d = (_c = window === null || window === void 0 ? void 0 : window.location) === null || _c === void 0 ? void 0 : _c.href) === null || _d === void 0 ? void 0 : _d.indexOf('#settings')) > -1) {
             page(PAGE_MAP['settings']);
         }
+        for (var i = 0, l = worldSelect.options.length; i < l; i++) {
+            if (worldSelect.options.item(i).innerText == Cookie.homeWorld) {
+                worldSelect.selectedIndex = i;
+                break;
+            }
+        }
+        worldSelect.addEventListener('input', function () {
+            var option = worldSelect.selectedOptions[0].innerText;
+            Cookie.homeWorld = WORLDS.indexOf(option) > -1 ? option : 'Moogle';
+            Cookie.save();
+            window.location.reload();
+        });
         loadData();
         loadWeekly();
     }
@@ -303,7 +316,8 @@ var Script;
     Script.page = page;
     function loadWeekly() {
         var top = ffxiv_weekly_dump[Cookie.homeWorld].slice(0, 100);
-        console.debug(top);
+        document.querySelector('#worldBestseller').innerHTML = Cookie.homeWorld;
+        // console.debug(top);
         function createTR(i, item) {
             return "\n            <tr>\n                <td class=\"text-center\">\n                    <button data-addref=\"".concat(item.itemID, "\" ").concat(ITEM_LIST.indexOf(item.itemID) > -1 ? 'class="text-light bg-success"' : "class=\"text-dark bg-light\" onclick=\"Script.addBestseller(".concat(item.itemID, ");\""), " >&check;</button>\n                </td>\n                <td class=\"text-center\">&nbsp;#").concat(i, "&nbsp;</td>\n                <td>\n                    <img width=\"24\" alt=\"2x\" src=\"https://universalis-ffxiv.github.io/universalis-assets/icon2x/").concat(item.itemID, ".png\" />\n                </td>\n                <td>&nbsp;").concat(ffxiv_item_map[item.itemID].en, "&nbsp;</td>\n                <td class=\"text-secondary text-center\">&nbsp;(").concat(item.itemID, ")&nbsp;</td>\n                <td class=\"text-center\">&nbsp;").concat(displayNumOrEmpty(item.averagePrice, (item.averagePrice).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })), "&nbsp;</td>\n                <td class=\"text-center\">&nbsp;").concat(displayNumOrEmpty(item.averagePriceNQ, (item.averagePriceNQ).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })), "&nbsp;</td>\n                <td class=\"text-center\">&nbsp;").concat(displayNumOrEmpty(item.averagePriceHQ, (item.averagePriceHQ).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })), "&nbsp;</td>\n                <td class=\"text-center\">&nbsp;").concat(displayNumOrEmpty(item.regularSaleVelocity, (item.regularSaleVelocity).toLocaleString('de-DE', { minimumFractionDigits: 3, maximumFractionDigits: 3 })), "&nbsp;</td>\n                <td class=\"text-center\">&nbsp;").concat(displayNumOrEmpty(item.nqSaleVelocity, (item.nqSaleVelocity).toLocaleString('de-DE', { minimumFractionDigits: 3, maximumFractionDigits: 3 })), "&nbsp;</td>\n                <td class=\"text-center\">&nbsp;").concat(displayNumOrEmpty(item.hqSaleVelocity, (item.hqSaleVelocity).toLocaleString('de-DE', { minimumFractionDigits: 3, maximumFractionDigits: 3 })), "&nbsp;</td>\n            </tr>");
         }
