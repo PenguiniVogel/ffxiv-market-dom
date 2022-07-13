@@ -32,20 +32,27 @@ var Weekly;
             console.debug("ffxiv_weekly_dump['".concat(world, "'] = ").concat(JSON.stringify(sorted), ";"));
             console.debug(all_items, sorted);
             // missing (empty collection)
-            console.debug(Object.keys(checkmap).filter(function (x) { return checkmap[x] == false; }).map(function (x) { return "".concat(ffxiv_item_map[x].en, " (").concat(x, ")"); }));
-            fetch("https://universalis.app/api/".concat(world, "/").concat(Object.keys(checkmap).filter(function (x) { return checkmap[x] == false; }).join('%2C'), "?listings=0&entries=0")).then(function (res) {
-                res.json().then(function (json) {
-                    console.debug(json);
+            var missingMap = Object.keys(checkmap).filter(function (x) { return checkmap[x] == false; }).map(function (x) { return "".concat(ffxiv_item_map[x].en, " (").concat(x, ")"); });
+            if (missingMap.length > 0) {
+                console.debug(missingMap);
+                fetch("https://universalis.app/api/v2/".concat(world, "/").concat(Object.keys(checkmap).filter(function (x) { return checkmap[x] == false; }).join('%2C'), "?listings=0&entries=0")).then(function (res) {
+                    res.json().then(function (json) {
+                        console.debug(json);
+                    });
                 });
-            });
+            }
+            else {
+                console.debug('No missing items reported.');
+            }
             return;
         }
-        fetch("https://universalis.app/api/".concat(world, "/").concat(buckets[bucketId].join('%2C'), "?listings=0&entries=0")).then(function (res) {
+        fetch("https://universalis.app/api/v2/".concat(world, "/").concat(buckets[bucketId].join('%2C'), "?listings=0&entries=0")).then(function (res) {
             res.json().then(function (json) {
                 var resp = typeof json == 'object' ? json : JSON.parse(json);
-                for (var _i = 0, _a = resp.items; _i < _a.length; _i++) {
-                    var item = _a[_i];
-                    checkmap[item.itemID] = true;
+                for (var _i = 0, _a = resp.itemIDs; _i < _a.length; _i++) {
+                    var itemID = _a[_i];
+                    var item = resp.items[itemID];
+                    checkmap[itemID] = true;
                     delete item['stackSizeHistogram'];
                     delete item['stackSizeHistogramNQ'];
                     delete item['stackSizeHistogramHQ'];

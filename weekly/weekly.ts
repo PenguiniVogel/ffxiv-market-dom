@@ -45,23 +45,30 @@ module Weekly {
             console.debug(all_items, sorted);
 
             // missing (empty collection)
-            console.debug(Object.keys(checkmap).filter(x => checkmap[x] == false).map(x => `${ffxiv_item_map[x].en} (${x})`));
+            let missingMap = Object.keys(checkmap).filter(x => checkmap[x] == false).map(x => `${ffxiv_item_map[x].en} (${x})`);
 
-            fetch(`https://universalis.app/api/${world}/${Object.keys(checkmap).filter(x => checkmap[x] == false).join('%2C')}?listings=0&entries=0`).then(res => {
-                res.json().then(json => {
-                    console.debug(json);
+            if (missingMap.length > 0) {
+                console.debug(missingMap);
+
+                fetch(`https://universalis.app/api/v2/${world}/${Object.keys(checkmap).filter(x => checkmap[x] == false).join('%2C')}?listings=0&entries=0`).then(res => {
+                    res.json().then(json => {
+                        console.debug(json);
+                    });
                 });
-            });
+            } else {
+                console.debug('No missing items reported.');
+            }
 
             return;
         }
 
-        fetch(`https://universalis.app/api/${world}/${buckets[bucketId].join('%2C')}?listings=0&entries=0`).then(res => {
+        fetch(`https://universalis.app/api/v2/${world}/${buckets[bucketId].join('%2C')}?listings=0&entries=0`).then(res => {
             res.json().then(json => {
                 let resp: WorldResponse = typeof json == 'object' ? json : JSON.parse(json);
 
-                for (let item of resp.items) {
-                    checkmap[item.itemID] = true;
+                for (let itemID of resp.itemIDs) {
+                    let item = resp.items[itemID];
+                    checkmap[itemID] = true;
 
                     delete item['stackSizeHistogram'];
                     delete item['stackSizeHistogramNQ'];

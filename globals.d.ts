@@ -25,8 +25,11 @@ interface WorldResponseItem {
 }
 
 interface WorldResponse {
-    items: WorldResponseItem[]
-    indexMap: {
-        [id: number]: number
-    }
+    itemIDs: number[],
+    items: {
+       [id: number]: WorldResponseItem
+    },
+    unresolvedItems: any[]
+    worldID: number,
+    worldName: string,
 }

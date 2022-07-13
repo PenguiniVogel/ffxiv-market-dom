@@ -3,6 +3,8 @@ module TemplateRender {
     export interface TemplateDFExpanded {
         itemID: string,
         itemName: string,
+        nqDisplay: 'display: table-row;' | 'display: none;',
+        hqDisplay: 'display: table-row;' | 'display: none;',
         homeWorldName: string,
         homeNQPrice: string,
         homeNQSaleVelocity: string,
@@ -32,7 +34,7 @@ module TemplateRender {
         let template = document.querySelector(`template#${id}`).innerHTML;
         let templateVars = template.match(/\$\{[a-z_A-Z]+\}/gi);
 
-        console.debug(`[TemplateRender] Loaded '${id}' with:`, templateVars);
+        console.debug(`[TemplateRender] Loaded '${id}'`);
 
         for (let templateVar of templateVars) {
             let stripped = templateVar.replace(/[${}]/g, '');

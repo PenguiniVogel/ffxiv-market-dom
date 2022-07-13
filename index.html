@@ -12,12 +12,26 @@
     <script src="lib/ffxiv_item_map.js"></script>
 
     <script src="lib/ffxiv_weekly_dump.js"></script>
+
+    <!-- Chaos -->
     <script src="lib/ffxiv_weekly_dump_cerberus.js"></script>
     <script src="lib/ffxiv_weekly_dump_louisoix.js"></script>
     <script src="lib/ffxiv_weekly_dump_moogle.js"></script>
     <script src="lib/ffxiv_weekly_dump_omega.js"></script>
+    <script src="lib/ffxiv_weekly_dump_phantom.js"></script>
     <script src="lib/ffxiv_weekly_dump_ragnarok.js"></script>
+    <script src="lib/ffxiv_weekly_dump_sagittarius.js"></script>
     <script src="lib/ffxiv_weekly_dump_spriggan.js"></script>
+
+    <!-- Light -->
+    <script src="lib/ffxiv_weekly_dump_alpha.js"></script>
+    <script src="lib/ffxiv_weekly_dump_lich.js"></script>
+    <script src="lib/ffxiv_weekly_dump_odin.js"></script>
+    <script src="lib/ffxiv_weekly_dump_phoenix.js"></script>
+    <script src="lib/ffxiv_weekly_dump_raiden.js"></script>
+    <script src="lib/ffxiv_weekly_dump_shiva.js"></script>
+    <script src="lib/ffxiv_weekly_dump_twintania.js"></script>
+    <script src="lib/ffxiv_weekly_dump_zodiark.js"></script>
 
     <script src="Cookie.js"></script>
     <script src="TemplateRender.js"></script>
@@ -101,12 +115,12 @@
                                                         </tr>
                                                         </thead>
                                                         <tbody>
-                                                        <tr>
+                                                        <tr style="${nqDisplay}">
                                                             <td>&nbsp;NQ&nbsp;</td>
                                                             <td>&nbsp;${homeNQPrice}&nbsp;</td>
                                                             <td>&nbsp;${homeNQSaleVelocity}&nbsp;</td>
                                                         </tr>
-                                                        <tr>
+                                                        <tr style="${hqDisplay}">
                                                             <td>&nbsp;HQ&nbsp;</td>
                                                             <td>&nbsp;${homeHQPrice}&nbsp;</td>
                                                             <td>&nbsp;${homeHQSaleVelocity}&nbsp;</td>
@@ -125,10 +139,10 @@
                                                         </tr>
                                                         </thead>
                                                         <tbody>
-                                                        <tr>
+                                                        <tr style="${nqDisplay}">
                                                             <td>&nbsp;&gt;&nbsp;</td>
                                                         </tr>
-                                                        <tr>
+                                                        <tr style="${hqDisplay}">
                                                             <td>&nbsp;&gt;&nbsp;</td>
                                                         </tr>
                                                         </tbody>
@@ -149,14 +163,14 @@
                                                         </tr>
                                                         </thead>
                                                         <tbody>
-                                                        <tr>
+                                                        <tr style="${nqDisplay}">
                                                             <td>&nbsp;${cheapestNQWorldName}&nbsp;</td>
                                                             <td>&nbsp;NQ&nbsp;</td>
                                                             <td>&nbsp;${cheapestNQPrice}&nbsp;</td>
                                                             <td>&nbsp;${cheapestNQSaleVelocity}&nbsp;</td>
                                                             <td>&nbsp;${cheapestNQDiff}&nbsp;</td>
                                                         </tr>
-                                                        <tr>
+                                                        <tr style="${hqDisplay}">
                                                             <td>&nbsp;${cheapestHQWorldName}&nbsp;</td>
                                                             <td>&nbsp;HQ&nbsp;</td>
                                                             <td>&nbsp;${cheapestHQPrice}&nbsp;</td>
@@ -177,10 +191,10 @@
                                                         </tr>
                                                         </thead>
                                                         <tbody>
-                                                        <tr>
+                                                        <tr style="${nqDisplay}">
                                                             <td>&nbsp;&gt;&nbsp;</td>
                                                         </tr>
-                                                        <tr>
+                                                        <tr style="${hqDisplay}">
                                                             <td>&nbsp;&gt;&nbsp;</td>
                                                         </tr>
                                                         </tbody>
@@ -201,14 +215,14 @@
                                                         </tr>
                                                         </thead>
                                                         <tbody>
-                                                        <tr>
+                                                        <tr style="${nqDisplay}">
                                                             <td>&nbsp;${expensiveNQWorldName}&nbsp;</td>
                                                             <td>&nbsp;NQ&nbsp;</td>
                                                             <td>&nbsp;${expensiveNQPrice}&nbsp;</td>
                                                             <td>&nbsp;${expensiveNQSaleVelocity}&nbsp;</td>
                                                             <td>&nbsp;${expensiveNQDiff}&nbsp;</td>
                                                         </tr>
-                                                        <tr>
+                                                        <tr style="${hqDisplay}">
                                                             <td>&nbsp;${expensiveHQWorldName}&nbsp;</td>
                                                             <td>&nbsp;HQ&nbsp;</td>
                                                             <td>&nbsp;${expensiveHQPrice}&nbsp;</td>
@@ -245,7 +259,7 @@
                             <tr>
                                 <table>
                                     <tbody>
-                                    <tr>
+                                    <tr style="${nqDisplay}">
                                         <td>&nbsp;NQ &gt;&nbsp;</td>
                                         <td>&nbsp;${homeWorldName}&nbsp;</td>
                                         <td>&nbsp;${homeNQPrice}&nbsp;</td>
@@ -261,7 +275,7 @@
                                         <td>&nbsp;${expensiveNQSaleVelocity}&nbsp;</td>
                                         <td>&nbsp;${expensiveNQDiff}&nbsp;</td>
                                     </tr>
-                                    <tr>
+                                    <tr style="${hqDisplay}">
                                         <td>&nbsp;HQ &gt;&nbsp;</td>
                                         <td>&nbsp;${homeWorldName}&nbsp;</td>
                                         <td>&nbsp;${homeHQPrice}&nbsp;</td>
@@ -286,7 +300,6 @@
                     </div>
                 </div>
             </template>
-
         </div>
     </e>
 

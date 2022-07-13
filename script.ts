@@ -7,12 +7,24 @@ module Script {
     };
 
     const WORLDS: string[] = [
+        // Chaos
         'Cerberus',
         'Louisoix',
         'Moogle',
         'Omega',
+        'Phantom',
         'Ragnarok',
-        'Spriggan'
+        'Sagittarius',
+        'Spriggan',
+        // Light
+        'Alpha',
+        'Lich',
+        'Odin',
+        'Phoenix',
+        'Raiden',
+        'Shiva',
+        'Twintania',
+        'Zodiark'
     ];
 
     let ITEM_LIST : number[] = [
@@ -116,22 +128,26 @@ module Script {
             return;
         }
 
+        let shift = 1;
         for (let k of WORLDS) {
-            fetch(`https://universalis.app/api/${k}/${ITEM_LIST.join('%2C')}?listings=0&entries=0`).then(res => {
+            setTimeout(() => fetch(`https://universalis.app/api/v2/${k}/${ITEM_LIST.join('%2C')}?listings=0&entries=0`).then(res => {
                 res.json().then(json => {
-                    let resp: WorldResponse = typeof json == 'object' ? json : JSON.parse(json);
-                    resp.indexMap = {};
+                    // console.debug(json);
+                    // let resp: WorldResponse = typeof json == 'object' ? json : JSON.parse(json);
+                    // resp.indexMap = {};
+                    // for (let i = 0, l = resp.items.length; i < l; i ++) {
+                    //     let item = resp.items[i];
+                    //     resp.indexMap[item.itemID] = i;
+                    // }
+                    // responses[k] = resp;
 
-                    for (let i = 0, l = resp.items.length; i < l; i ++) {
-                        let item = resp.items[i];
-                        resp.indexMap[item.itemID] = i;
-                    }
-
-                    responses[k] = resp;
+                    responses[k] = typeof json == 'object' ? json : JSON.parse(json);
 
                     checkAllAvailable();
                 });
-            });
+            }), 200 * shift);
+
+            shift ++;
         }
     }
 
@@ -185,35 +201,44 @@ module Script {
             let world = WORLDS[i];
             let data = responses[world];
 
-            for (let item of data.items) {
-                if (!trackMinMax[item.itemID]) {
-                    trackMinMax[item.itemID] = {
-                        home: item,
-                        cheapestNQ: item,
-                        cheapestHQ: item,
-                        expensiveNQ: item,
-                        expensiveHQ: item
+            for (let itemID of data.itemIDs) {
+                let itemData = data.items[itemID];
+
+                if (!!!itemData) {
+                    console.warn(`World ${world} has no data for '${ffxiv_item_map[itemID].en}' (${itemID})`);
+                    continue;
+                }
+
+                if (!trackMinMax[itemID]) {
+                    trackMinMax[itemID] = {
+                        home: itemData,
+                        cheapestNQ: itemData,
+                        cheapestHQ: itemData,
+                        expensiveNQ: itemData,
+                        expensiveHQ: itemData
                     };
                 }
 
                 if (world == Cookie.homeWorld) {
-                    trackMinMax[item.itemID].home = item;
+                    trackMinMax[itemID].home = itemData;
                 }
 
-                if (item.minPriceNQ < trackMinMax[item.itemID].cheapestNQ.minPriceNQ) {
-                    trackMinMax[item.itemID].cheapestNQ = item;
+                if (itemData.minPriceNQ > 0 && itemData.minPriceNQ < trackMinMax[itemID].cheapestNQ.minPriceNQ) {
+                    trackMinMax[itemID].cheapestNQ = itemData;
                 }
-                if (item.minPriceHQ < trackMinMax[item.itemID].cheapestHQ.minPriceHQ) {
-                    trackMinMax[item.itemID].cheapestHQ = item;
+                if (itemData.minPriceHQ > 0 && itemData.minPriceHQ < trackMinMax[itemID].cheapestHQ.minPriceHQ) {
+                    trackMinMax[itemID].cheapestHQ = itemData;
                 }
-                if (item.minPriceNQ > trackMinMax[item.itemID].expensiveNQ.minPriceNQ) {
-                    trackMinMax[item.itemID].expensiveNQ = item;
+                if (itemData.minPriceNQ > 0 && itemData.minPriceNQ > trackMinMax[itemID].expensiveNQ.minPriceNQ) {
+                    trackMinMax[itemID].expensiveNQ = itemData;
                 }
-                if (item.minPriceHQ > trackMinMax[item.itemID].expensiveHQ.minPriceHQ) {
-                    trackMinMax[item.itemID].expensiveHQ = item;
+                if (itemData.minPriceHQ > 0 && itemData.minPriceHQ > trackMinMax[itemID].expensiveHQ.minPriceHQ) {
+                    trackMinMax[itemID].expensiveHQ = itemData;
                 }
             }
         }
+
+        console.debug('MinMax Loaded', trackMinMax);
 
         // for (let item_id of Object.keys(cheapest)) {
         //     let itemNQ: WorldResponseItem = cheapest[item_id].nq;
@@ -256,10 +281,8 @@ module Script {
         let expensiveItemNQ = trackMinMax[id].expensiveNQ;
         let expensiveItemHQ = trackMinMax[id].expensiveHQ;
 
-        let hasCheapestNQ = cheapestItemNQ.nqSaleVelocity > 0.0001 && cheapestItemNQ.minPriceNQ > 0;
-        let hasCheapestHQ = cheapestItemHQ.hqSaleVelocity > 0.0001 && cheapestItemHQ.minPriceHQ > 0;
-        let hasExpensiveNQ = expensiveItemNQ.nqSaleVelocity > 0.0001 && expensiveItemNQ.minPriceNQ > 0;
-        let hasExpensiveHQ = expensiveItemHQ.hqSaleVelocity > 0.0001 && expensiveItemHQ.minPriceHQ > 0;
+        let hasNQ = homeItem.minPriceNQ > 0 && cheapestItemNQ.minPriceNQ > 0 && expensiveItemNQ.minPriceNQ > 0;
+        let hasHQ = homeItem.minPriceHQ > 0 && cheapestItemHQ.minPriceHQ > 0 && expensiveItemHQ.minPriceHQ > 0;
 
         let minCheapestNQ = Math.min(homeItem.minPriceNQ, cheapestItemNQ.minPriceNQ * 1.05);
         let maxCheapestNQ = Math.max(homeItem.minPriceNQ, cheapestItemNQ.minPriceNQ * 1.05);
@@ -296,21 +319,27 @@ module Script {
         let generatedRow = TemplateRender.renderTemplate(Cookie.storedSettings.displayFormat, <TemplateRender.TemplateDFExpanded>{
             itemID: `${homeItem.itemID}`,
             itemName: ffxiv_item_map[homeItem.itemID].en,
+            nqDisplay: hasNQ ? 'display: table-row;' : 'display: none;',
+            hqDisplay: hasHQ ? 'display: table-row;' : 'display: none;',
             homeWorldName: homeItem.worldName,
             homeNQPrice: formatPrice(homeItem.minPriceNQ),
             homeNQSaleVelocity: formatSaleVelocity(homeItem.nqSaleVelocity),
             homeHQPrice: formatPrice(homeItem.minPriceHQ),
             homeHQSaleVelocity: formatSaleVelocity(homeItem.hqSaleVelocity),
-            cheapestNQWorldName: hasCheapestNQ ? cheapestItemNQ.worldName : '<span class="text-danger">---</span>',
-            cheapestHQWorldName: hasCheapestHQ ? cheapestItemHQ.worldName : '<span class="text-danger">---</span>',
+            // cheapestNQWorldName: hasCheapestNQ ? cheapestItemNQ.worldName : '<span class="text-danger">---</span>',
+            // cheapestHQWorldName: hasCheapestHQ ? cheapestItemHQ.worldName : '<span class="text-danger">---</span>',
+            cheapestNQWorldName: cheapestItemNQ.worldName,
+            cheapestHQWorldName: cheapestItemHQ.worldName,
             cheapestNQPrice: formatPrice(cheapestItemNQ.minPriceNQ),
             cheapestNQSaleVelocity: formatSaleVelocity(cheapestItemNQ.nqSaleVelocity),
             cheapestNQDiff: formatDiff(profitCheapestNQ, cheapestNQDiff),
             cheapestHQPrice: formatPrice(cheapestItemHQ.minPriceHQ),
             cheapestHQSaleVelocity: formatSaleVelocity(cheapestItemHQ.hqSaleVelocity),
             cheapestHQDiff: formatDiff(profitCheapestHQ, cheapestHQDiff),
-            expensiveNQWorldName: hasExpensiveNQ ? expensiveItemNQ.worldName : '<span class="text-danger">---</span>',
-            expensiveHQWorldName: hasExpensiveHQ ? expensiveItemHQ.worldName : '<span class="text-danger">---</span>',
+            // expensiveNQWorldName: hasExpensiveNQ ? expensiveItemNQ.worldName : '<span class="text-danger">---</span>',
+            // expensiveHQWorldName: hasExpensiveHQ ? expensiveItemHQ.worldName : '<span class="text-danger">---</span>',
+            expensiveNQWorldName: expensiveItemNQ.worldName,
+            expensiveHQWorldName: expensiveItemHQ.worldName,
             expensiveNQPrice: formatPrice(expensiveItemNQ.minPriceNQ),
             expensiveNQSaleVelocity: formatSaleVelocity(expensiveItemNQ.nqSaleVelocity),
             expensiveNQDiff: formatDiff(profitExpensiveNQ, expensiveNQDiff),

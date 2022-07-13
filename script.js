@@ -15,12 +15,24 @@ var Script;
         'settings': 3
     };
     var WORLDS = [
+        // Chaos
         'Cerberus',
         'Louisoix',
         'Moogle',
         'Omega',
+        'Phantom',
         'Ragnarok',
-        'Spriggan'
+        'Sagittarius',
+        'Spriggan',
+        // Light
+        'Alpha',
+        'Lich',
+        'Odin',
+        'Phoenix',
+        'Raiden',
+        'Shiva',
+        'Twintania',
+        'Zodiark'
     ];
     var ITEM_LIST = __spreadArray([
         21800
@@ -92,19 +104,23 @@ var Script;
         if (ITEM_LIST.length < 1) {
             return;
         }
+        var shift = 1;
         var _loop_1 = function (k) {
-            fetch("https://universalis.app/api/".concat(k, "/").concat(ITEM_LIST.join('%2C'), "?listings=0&entries=0")).then(function (res) {
+            setTimeout(function () { return fetch("https://universalis.app/api/v2/".concat(k, "/").concat(ITEM_LIST.join('%2C'), "?listings=0&entries=0")).then(function (res) {
                 res.json().then(function (json) {
-                    var resp = typeof json == 'object' ? json : JSON.parse(json);
-                    resp.indexMap = {};
-                    for (var i = 0, l = resp.items.length; i < l; i++) {
-                        var item = resp.items[i];
-                        resp.indexMap[item.itemID] = i;
-                    }
-                    responses[k] = resp;
+                    // console.debug(json);
+                    // let resp: WorldResponse = typeof json == 'object' ? json : JSON.parse(json);
+                    // resp.indexMap = {};
+                    // for (let i = 0, l = resp.items.length; i < l; i ++) {
+                    //     let item = resp.items[i];
+                    //     resp.indexMap[item.itemID] = i;
+                    // }
+                    // responses[k] = resp;
+                    responses[k] = typeof json == 'object' ? json : JSON.parse(json);
                     checkAllAvailable();
                 });
-            });
+            }); }, 200 * shift);
+            shift++;
         };
         for (var _i = 0, WORLDS_1 = WORLDS; _i < WORLDS_1.length; _i++) {
             var k = WORLDS_1[_i];
@@ -147,34 +163,40 @@ var Script;
         for (var i = 0, l = WORLDS.length; i < l; i++) {
             var world = WORLDS[i];
             var data = responses[world];
-            for (var _b = 0, _c = data.items; _b < _c.length; _b++) {
-                var item = _c[_b];
-                if (!trackMinMax[item.itemID]) {
-                    trackMinMax[item.itemID] = {
-                        home: item,
-                        cheapestNQ: item,
-                        cheapestHQ: item,
-                        expensiveNQ: item,
-                        expensiveHQ: item
+            for (var _b = 0, _c = data.itemIDs; _b < _c.length; _b++) {
+                var itemID = _c[_b];
+                var itemData = data.items[itemID];
+                if (!!!itemData) {
+                    console.warn("World ".concat(world, " has no data for '").concat(ffxiv_item_map[itemID].en, "' (").concat(itemID, ")"));
+                    continue;
+                }
+                if (!trackMinMax[itemID]) {
+                    trackMinMax[itemID] = {
+                        home: itemData,
+                        cheapestNQ: itemData,
+                        cheapestHQ: itemData,
+                        expensiveNQ: itemData,
+                        expensiveHQ: itemData
                     };
                 }
                 if (world == Cookie.homeWorld) {
-                    trackMinMax[item.itemID].home = item;
+                    trackMinMax[itemID].home = itemData;
                 }
-                if (item.minPriceNQ < trackMinMax[item.itemID].cheapestNQ.minPriceNQ) {
-                    trackMinMax[item.itemID].cheapestNQ = item;
+                if (itemData.minPriceNQ > 0 && itemData.minPriceNQ < trackMinMax[itemID].cheapestNQ.minPriceNQ) {
+                    trackMinMax[itemID].cheapestNQ = itemData;
                 }
-                if (item.minPriceHQ < trackMinMax[item.itemID].cheapestHQ.minPriceHQ) {
-                    trackMinMax[item.itemID].cheapestHQ = item;
+                if (itemData.minPriceHQ > 0 && itemData.minPriceHQ < trackMinMax[itemID].cheapestHQ.minPriceHQ) {
+                    trackMinMax[itemID].cheapestHQ = itemData;
                 }
-                if (item.minPriceNQ > trackMinMax[item.itemID].expensiveNQ.minPriceNQ) {
-                    trackMinMax[item.itemID].expensiveNQ = item;
+                if (itemData.minPriceNQ > 0 && itemData.minPriceNQ > trackMinMax[itemID].expensiveNQ.minPriceNQ) {
+                    trackMinMax[itemID].expensiveNQ = itemData;
                 }
-                if (item.minPriceHQ > trackMinMax[item.itemID].expensiveHQ.minPriceHQ) {
-                    trackMinMax[item.itemID].expensiveHQ = item;
+                if (itemData.minPriceHQ > 0 && itemData.minPriceHQ > trackMinMax[itemID].expensiveHQ.minPriceHQ) {
+                    trackMinMax[itemID].expensiveHQ = itemData;
                 }
             }
         }
+        console.debug('MinMax Loaded', trackMinMax);
         // for (let item_id of Object.keys(cheapest)) {
         //     let itemNQ: WorldResponseItem = cheapest[item_id].nq;
         //     let itemHQ: WorldResponseItem = cheapest[item_id].hq;
@@ -214,10 +236,8 @@ var Script;
         var cheapestItemHQ = trackMinMax[id].cheapestHQ;
         var expensiveItemNQ = trackMinMax[id].expensiveNQ;
         var expensiveItemHQ = trackMinMax[id].expensiveHQ;
-        var hasCheapestNQ = cheapestItemNQ.nqSaleVelocity > 0.0001 && cheapestItemNQ.minPriceNQ > 0;
-        var hasCheapestHQ = cheapestItemHQ.hqSaleVelocity > 0.0001 && cheapestItemHQ.minPriceHQ > 0;
-        var hasExpensiveNQ = expensiveItemNQ.nqSaleVelocity > 0.0001 && expensiveItemNQ.minPriceNQ > 0;
-        var hasExpensiveHQ = expensiveItemHQ.hqSaleVelocity > 0.0001 && expensiveItemHQ.minPriceHQ > 0;
+        var hasNQ = homeItem.minPriceNQ > 0 && cheapestItemNQ.minPriceNQ > 0 && expensiveItemNQ.minPriceNQ > 0;
+        var hasHQ = homeItem.minPriceHQ > 0 && cheapestItemHQ.minPriceHQ > 0 && expensiveItemHQ.minPriceHQ > 0;
         var minCheapestNQ = Math.min(homeItem.minPriceNQ, cheapestItemNQ.minPriceNQ * 1.05);
         var maxCheapestNQ = Math.max(homeItem.minPriceNQ, cheapestItemNQ.minPriceNQ * 1.05);
         var profitCheapestNQ = homeItem.minPriceNQ > cheapestItemNQ.minPriceNQ * 1.05;
@@ -246,21 +266,27 @@ var Script;
         var generatedRow = TemplateRender.renderTemplate(Cookie.storedSettings.displayFormat, {
             itemID: "".concat(homeItem.itemID),
             itemName: ffxiv_item_map[homeItem.itemID].en,
+            nqDisplay: hasNQ ? 'display: table-row;' : 'display: none;',
+            hqDisplay: hasHQ ? 'display: table-row;' : 'display: none;',
             homeWorldName: homeItem.worldName,
             homeNQPrice: formatPrice(homeItem.minPriceNQ),
             homeNQSaleVelocity: formatSaleVelocity(homeItem.nqSaleVelocity),
             homeHQPrice: formatPrice(homeItem.minPriceHQ),
             homeHQSaleVelocity: formatSaleVelocity(homeItem.hqSaleVelocity),
-            cheapestNQWorldName: hasCheapestNQ ? cheapestItemNQ.worldName : '<span class="text-danger">---</span>',
-            cheapestHQWorldName: hasCheapestHQ ? cheapestItemHQ.worldName : '<span class="text-danger">---</span>',
+            // cheapestNQWorldName: hasCheapestNQ ? cheapestItemNQ.worldName : '<span class="text-danger">---</span>',
+            // cheapestHQWorldName: hasCheapestHQ ? cheapestItemHQ.worldName : '<span class="text-danger">---</span>',
+            cheapestNQWorldName: cheapestItemNQ.worldName,
+            cheapestHQWorldName: cheapestItemHQ.worldName,
             cheapestNQPrice: formatPrice(cheapestItemNQ.minPriceNQ),
             cheapestNQSaleVelocity: formatSaleVelocity(cheapestItemNQ.nqSaleVelocity),
             cheapestNQDiff: formatDiff(profitCheapestNQ, cheapestNQDiff),
             cheapestHQPrice: formatPrice(cheapestItemHQ.minPriceHQ),
             cheapestHQSaleVelocity: formatSaleVelocity(cheapestItemHQ.hqSaleVelocity),
             cheapestHQDiff: formatDiff(profitCheapestHQ, cheapestHQDiff),
-            expensiveNQWorldName: hasExpensiveNQ ? expensiveItemNQ.worldName : '<span class="text-danger">---</span>',
-            expensiveHQWorldName: hasExpensiveHQ ? expensiveItemHQ.worldName : '<span class="text-danger">---</span>',
+            // expensiveNQWorldName: hasExpensiveNQ ? expensiveItemNQ.worldName : '<span class="text-danger">---</span>',
+            // expensiveHQWorldName: hasExpensiveHQ ? expensiveItemHQ.worldName : '<span class="text-danger">---</span>',
+            expensiveNQWorldName: expensiveItemNQ.worldName,
+            expensiveHQWorldName: expensiveItemHQ.worldName,
             expensiveNQPrice: formatPrice(expensiveItemNQ.minPriceNQ),
             expensiveNQSaleVelocity: formatSaleVelocity(expensiveItemNQ.nqSaleVelocity),
             expensiveNQDiff: formatDiff(profitExpensiveNQ, expensiveNQDiff),
